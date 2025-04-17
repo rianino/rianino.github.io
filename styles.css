@@ -18,3 +18,72 @@ nav a {
 main {
     margin: 20px;
 }
+
+.phonebook-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+}
+
+.phonebook {
+    width: 320px;
+    height: 420px;
+    background: #f5e9da;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.3s;
+}
+.phonebook-cover {
+    background: #c9b29b;
+    color: #fff;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    transition: transform 1s cubic-bezier(.77,0,.18,1);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+}
+.phonebook.open .phonebook-cover {
+    transform: rotateY(-100deg) scaleX(0);
+}
+.phonebook-content {
+    opacity: 0;
+    transition: opacity 0.8s 0.2s;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+.phonebook.open .phonebook-content {
+    opacity: 1;
+}
+.phonebook-content ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.phonebook-content li {
+    margin: 18px 0;
+    font-size: 1.2em;
+}
+.phonebook-content a {
+    color: #0078d4;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.phonebook-content a:hover {
+    color: #005a9e;
+}
