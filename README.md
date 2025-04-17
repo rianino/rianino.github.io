@@ -6,9 +6,9 @@ Welcome to the repository for my personal website, hosted on [GitHub Pages](http
 
 This website serves as a portfolio and personal space to showcase my work, share insights, and connect with others. It is built primarily using:
 
-- **HTML** (83.1%)
-- **CSS** (12.6%)
-- **JavaScript** (4.3%)
+- **HTML**
+- **CSS**
+- **JavaScript**
 
 ## Features
 
