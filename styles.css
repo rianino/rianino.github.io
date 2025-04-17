@@ -6,6 +6,7 @@ body {
 header, footer {
     padding: 10px;
     text-align: center;
+    color: #fff;
 }
 
 header {
@@ -26,7 +27,7 @@ main {
     margin: 20px;
 }
 
-.phonebook-container {
+phonebook-container {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -57,7 +58,7 @@ main {
     transform: rotateY(180deg);
 }
 
-.phonebook-title {
+phonebook-title {
     position: absolute;
     top: 0;
     left: 0;
