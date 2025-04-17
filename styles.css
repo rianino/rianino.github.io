@@ -9,11 +9,11 @@ header, footer {
 }
 
 header {
-    background: linear-gradient(to bottom, chocolate 0%, #fff 100%);
+    background: linear-gradient(to bottom, rgb(96, 41, 2) 50%, #fff 100%);
 }
 
 footer {
-    background: linear-gradient(to top, chocolate 0%, #fff 100%);
+    background: linear-gradient(to top, rgb(96, 41, 2) 50%, #fff 100%);
 }
 
 nav a {
