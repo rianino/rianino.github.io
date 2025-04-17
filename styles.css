@@ -133,3 +133,28 @@ main {
 .phonebook-content a:hover {
     color: #005a9e;
 }
+
+.card-link {
+    display: flex;
+    align-items: center;
+    color: #888;
+    text-decoration: none;
+    font-size: 1.1em;
+    font-weight: 500;
+    gap: 10px;
+    transition: color 0.2s;
+}
+
+.card-link .icon {
+    display: flex;
+    align-items: center;
+    margin-right: 8px;
+}
+
+.card-link:hover, .card-link:focus {
+    color: #333;
+}
+
+.card-link:hover .icon svg, .card-link:focus .icon svg {
+    stroke: #333;
+}
