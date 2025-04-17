@@ -33,7 +33,7 @@ main {
     min-height: 80vh;
 }
 
-phonebook {
+.phonebook {
     width: 320px;
     height: 420px;
     background: #f5e9da;
@@ -42,6 +42,19 @@ phonebook {
     position: relative;
     overflow: hidden;
     transition: box-shadow 0.3s;
+    perspective: 1200px;
+}
+
+.phonebook-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 1s cubic-bezier(.77,0,.18,1);
+}
+
+.phonebook.open .phonebook-inner {
+    transform: rotateY(180deg);
 }
 
 .phonebook-title {
@@ -59,18 +72,23 @@ phonebook {
     letter-spacing: 1px;
 }
 
-.phonebook-cover {
-    background: #c9b29b;
-    color: #fff;
+.phonebook-cover, .phonebook-content {
+    backface-visibility: hidden;
     position: absolute;
     width: 100%;
     height: 100%;
+    top: 0;
+    left: 0;
+}
+
+.phonebook-cover {
+    z-index: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    z-index: 2;
-    transition: transform 1s cubic-bezier(.77,0,.18,1);
+    background: #c9b29b;
+    color: #fff;
     box-shadow: 0 4px 16px rgba(0,0,0,0.10);
 }
 
@@ -79,25 +97,20 @@ phonebook {
 }
 
 .phonebook-content {
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s 0.7s;
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    z-index: 1;
-}
-
-.phonebook.open .phonebook-content {
+    background: linear-gradient(135deg, #f5e9da 80%, #c9b29b 100%);
+    color: #333;
+    transform: rotateY(180deg);
     opacity: 1;
     pointer-events: auto;
-    transition-delay: 0.1s;
+    transition: none;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+    border-radius: 16px;
+    border: 2px solid #c9b29b;
 }
 
 .phonebook-content ul {
