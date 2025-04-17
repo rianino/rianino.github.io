@@ -1,6 +1,6 @@
 # My Personal Website
 
-Welcome to the repository for my personal website, hosted on [GitHub Pages](https://rianino.github.io).
+Welcome to the repository for my personal website, hosted on [GitHub Pages](http://www.rian.pt). 
 
 ## About
 
