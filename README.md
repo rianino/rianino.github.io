@@ -18,7 +18,7 @@ This website serves as a portfolio and personal space to showcase my work, share
 
 ## Getting Started
 
-To view the website, simply visit: [rianino.github.io](https://rianino.github.io).
+To view the website, simply visit: [www.rian.pt](http://www.rian.pt).
 
 To make changes locally:
 
