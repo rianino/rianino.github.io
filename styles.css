@@ -10,156 +10,19 @@ header, footer {
 }
 
 header {
-    background: linear-gradient(to bottom, rgb(40, 20, 0) 50%, #fff 100%);
+    background: linear-gradient(to bottom, #fff 50%, #fff 100%);
 }
 
 footer {
-    background: linear-gradient(to top, rgb(40, 20, 2) 50%, #fff 100%);
+    background: linear-gradient(to top, #fff 50%, #fff 100%);
 }
 
 nav a {
     margin: 0 10px;
     text-decoration: none;
-    color: #0078d4;
+    color: #fff;
 }
 
 main {
     margin: 20px;
-}
-
-phonebook-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 80vh;
-}
-
-.phonebook {
-    width: 320px;
-    height: 420px;
-    background: #f5e9da;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-    position: relative;
-    overflow: hidden;
-    transition: box-shadow 0.3s;
-    perspective: 1200px;
-}
-
-.phonebook-inner {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    transform-style: preserve-3d;
-    transition: transform 1s cubic-bezier(.77,0,.18,1);
-}
-
-.phonebook.open .phonebook-inner {
-    transform: rotateY(180deg);
-}
-
-phonebook-title {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    text-align: center;
-    background: transparent;
-    color: #7a5c3a;
-    font-size: 1.5em;
-    font-weight: bold;
-    padding: 18px 0 10px 0;
-    z-index: 3;
-    letter-spacing: 1px;
-    opacity: 1;
-    transition: opacity 0.4s;
-}
-
-.phonebook-content .phonebook-title {
-    opacity: 0.15;
-}
-
-.phonebook-cover, .phonebook-content {
-    backface-visibility: hidden;
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    border-radius: 16px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
-    border: 2px solid #c9b29b;
-}
-
-.phonebook-cover {
-    background: #c9b29b;
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-.phonebook.open .phonebook-cover {
-    transform: rotateY(-100deg) scaleX(0);
-}
-
-.phonebook-content {
-    background: linear-gradient(135deg, #f5e9da 80%, #c9b29b 100%);
-    color: #333;
-    transform: rotateY(180deg);
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    opacity: 1;
-    pointer-events: auto;
-    transition: none;
-}
-
-.phonebook-content ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.phonebook-content li {
-    margin: 18px 0;
-    font-size: 1.2em;
-}
-
-.phonebook-content a {
-    color: #888;
-    text-decoration: none;
-    transition: color 0.2s;
-}
-
-.phonebook-content a:hover {
-    color: #333;
-}
-
-.card-link {
-    display: flex;
-    align-items: center;
-    color: #888;
-    text-decoration: none;
-    font-size: 1.1em;
-    font-weight: 500;
-    gap: 10px;
-    transition: color 0.2s;
-}
-
-.card-link .icon {
-    display: flex;
-    align-items: center;
-    margin-right: 8px;
-}
-
-.card-link:hover, .card-link:focus {
-    color: #333;
-}
-
-.card-link:hover .icon svg, .card-link:focus .icon svg {
-    stroke: #333;
 }
