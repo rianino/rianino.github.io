@@ -1,0 +1,66 @@
+---
+interface Props {
+  title: string;
+  slug: string;
+  publishedAt: Date;
+  description: string;
+  readingTime: string;
+}
+
+const { title, slug, publishedAt, description, readingTime } = Astro.props;
+
+const formattedDate = publishedAt.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<article class="post-card">
+  <a href={`/blog/${slug}`} class="post-card-link">
+    <h3 class="post-card-title">{title}</h3>
+  </a>
+  <div class="post-card-meta">
+    <time datetime={publishedAt.toISOString().split('T')[0]}>{formattedDate}</time>
+    <span class="post-card-separator">&middot;</span>
+    <span>{readingTime}</span>
+  </div>
+  <p class="post-card-description">{description}</p>
+</article>
+
+<style>
+  .post-card {
+    padding-block: var(--space-6);
+  }
+
+  .post-card-link {
+    text-decoration: none;
+  }
+
+  .post-card-title {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    color: var(--color-text);
+    line-height: var(--leading-tight);
+    margin-bottom: var(--space-2);
+    transition: color 0.15s ease;
+  }
+
+  .post-card-link:hover .post-card-title {
+    color: var(--color-link-hover);
+  }
+
+  .post-card-meta {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-2);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .post-card-description {
+    color: var(--color-text-secondary);
+    line-height: var(--leading-normal);
+  }
+</style>

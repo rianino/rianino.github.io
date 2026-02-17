@@ -1,0 +1,50 @@
+---
+import SocialLinks from './SocialLinks.astro';
+---
+
+<section class="bio">
+  <img src="/images/avatar.svg" alt="Rian" class="bio-avatar" width="80" height="80" />
+  <div class="bio-text">
+    <h1 class="bio-name">Hi, I'm Rian!</h1>
+    <p class="bio-tagline">Building things on the internet. Thinking out loud here.</p>
+    <SocialLinks />
+  </div>
+</section>
+
+<style>
+  .bio {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-6);
+    padding-block: var(--space-12);
+  }
+
+  .bio-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .bio-name {
+    font-size: var(--text-2xl);
+    font-weight: 600;
+    line-height: var(--leading-tight);
+    margin-bottom: var(--space-2);
+  }
+
+  .bio-tagline {
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-4);
+    line-height: var(--leading-normal);
+  }
+
+  @media (max-width: 480px) {
+    .bio {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+  }
+</style>

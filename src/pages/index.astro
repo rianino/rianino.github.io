@@ -1,0 +1,23 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Bio from '../components/Bio.astro';
+import BlogPostList from '../components/BlogPostList.astro';
+import { readingTime } from '../lib/readingTime';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime())
+  .map((post) => ({
+    slug: post.id.replace(/\.md$/, ''),
+    title: post.data.title,
+    description: post.data.description,
+    publishedAt: post.data.publishedAt,
+    readingTime: readingTime(post.body ?? ''),
+  }));
+---
+
+<BaseLayout title="Rian — Personal Site">
+  <Bio />
+  <hr />
+  <BlogPostList posts={posts} />
+</BaseLayout>

@@ -1,0 +1,82 @@
+:root {
+  /* Earth-tone foundation */
+  --color-cream: #F5F0E8;
+  --color-cream-dark: #E8E0D4;
+  --color-stone: #B8AFA3;
+  --color-stone-light: #CDC6BB;
+  --color-charcoal: #2A2520;
+  --color-charcoal-light: #524B43;
+  --color-olive: #6B7F5A;
+  --color-olive-light: #8A9E78;
+  --color-tobacco: #96722B;
+  --color-tobacco-light: #B08A3E;
+  --color-rust: #9B5B3A;
+  --color-rust-light: #B87352;
+
+  /* Accent colors — deep, muted */
+  --color-navy: #34495E;
+  --color-forest: #3D6B2E;
+  --color-burgundy: #6B3040;
+
+  /* Light mode semantic tokens */
+  --color-bg: var(--color-cream);
+  --color-bg-subtle: var(--color-cream-dark);
+  --color-text: var(--color-charcoal);
+  --color-text-secondary: var(--color-charcoal-light);
+  --color-link: var(--color-olive);
+  --color-link-hover: var(--color-tobacco);
+  --color-border: var(--color-stone-light);
+  --color-code-bg: var(--color-charcoal);
+  --color-code-text: var(--color-cream);
+  --color-selection-bg: var(--color-olive-light);
+  --color-selection-text: var(--color-cream);
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Type scale */
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+
+  /* Layout */
+  --content-width: 760px;
+  --side-padding: clamp(1.25rem, 4vw, 3rem);
+
+  /* Line heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.6;
+  --leading-relaxed: 1.75;
+}
+
+/* Dark mode */
+[data-theme='dark'] {
+  --color-bg: #1C1917;
+  --color-bg-subtle: #252220;
+  --color-text: #E0DBD4;
+  --color-text-secondary: #A39E96;
+  --color-link: var(--color-olive-light);
+  --color-link-hover: var(--color-tobacco-light);
+  --color-border: #3D3632;
+  --color-code-bg: #13100E;
+  --color-code-text: #D4CFC7;
+  --color-selection-bg: var(--color-olive);
+  --color-selection-text: #F5F0E8;
+}

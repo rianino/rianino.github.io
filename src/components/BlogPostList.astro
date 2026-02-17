@@ -1,0 +1,48 @@
+---
+import BlogPostCard from './BlogPostCard.astro';
+
+interface Post {
+  slug: string;
+  title: string;
+  description: string;
+  publishedAt: Date;
+  readingTime: string;
+}
+
+interface Props {
+  posts: Post[];
+}
+
+const { posts } = Astro.props;
+---
+
+<section id="writing" class="post-list">
+  <h2 class="post-list-heading">Writing</h2>
+  {posts.map((post, i) => (
+    <>
+      <BlogPostCard
+        title={post.title}
+        slug={post.slug}
+        publishedAt={post.publishedAt}
+        description={post.description}
+        readingTime={post.readingTime}
+      />
+      {i < posts.length - 1 && <hr />}
+    </>
+  ))}
+</section>
+
+<style>
+  .post-list-heading {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-4);
+  }
+
+  .post-list hr {
+    margin-block: 0;
+  }
+</style>
