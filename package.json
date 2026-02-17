@@ -6,9 +6,15 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "sync": "tsx src/lib/notion.ts"
   },
   "dependencies": {
+    "@notionhq/client": "^2.3.0",
     "astro": "^5.17.1"
+  },
+  "devDependencies": {
+    "dotenv": "^17.3.1",
+    "tsx": "^4.21.0"
   }
 }
