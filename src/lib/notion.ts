@@ -51,6 +51,10 @@ function richTextToMarkdown(richText: RichTextItemResponse[]): string {
     .join('');
 }
 
+// Aspect ratio (w/h) per image block, filled in during download. Used to
+// size side-by-side images so they render at equal heights, like Notion.
+const imageAspects = new Map<string, number>();
+
 // Notion-hosted images use signed S3 URLs that expire after 1 hour, so
 // download them to public/ and reference the permanent local path instead.
 async function downloadImage(url: string, blockId: string): Promise<string> {
@@ -59,7 +63,13 @@ async function downloadImage(url: string, blockId: string): Promise<string> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Image download failed (${res.status}): ${url}`);
   fs.mkdirSync(IMAGES_DIR, { recursive: true });
-  fs.writeFileSync(path.join(IMAGES_DIR, filename), Buffer.from(await res.arrayBuffer()));
+  const buf = Buffer.from(await res.arrayBuffer());
+  fs.writeFileSync(path.join(IMAGES_DIR, filename), buf);
+  // ponytail: dimensions parsed for PNG only; other formats fall back to
+  // Notion's column ratios. Add JPEG SOF parsing if needed.
+  if (ext === '.png' && buf.length > 24 && buf.toString('ascii', 1, 4) === 'PNG') {
+    imageAspects.set(blockId, buf.readUInt32BE(16) / buf.readUInt32BE(20));
+  }
   return `/images/blog/${filename}`;
 }
 
@@ -114,15 +124,29 @@ async function blockToMarkdown(block: BlockObjectResponse): Promise<string> {
       const columns = (await listChildren(block.id)).filter(
         (c) => c.type === 'column',
       );
-      const divs = await Promise.all(
-        columns.map(async (col) => {
-          const ratio =
-            col.type === 'column' ? (col.column?.width_ratio ?? 1) : 1;
-          const children = await Promise.all(
-            (await listChildren(col.id)).map(blockToHtml),
-          );
-          return `<div style="flex:${ratio};min-width:0">${children.join('')}</div>`;
-        }),
+      const childrenPerColumn = await Promise.all(
+        columns.map((c) => listChildren(c.id)),
+      );
+      const htmlPerColumn = await Promise.all(
+        childrenPerColumn.map(async (children) =>
+          (await Promise.all(children.map(blockToHtml))).join(''),
+        ),
+      );
+      const ratios = columns.map((col) =>
+        col.type === 'column' ? (col.column?.width_ratio ?? 1) : 1,
+      );
+      // When every column is a single image of known size, weight widths by
+      // aspect ratio too, so the images come out equal-height like in Notion.
+      const aspects = childrenPerColumn.map((children) => {
+        const images = children.filter((c) => c.type === 'image');
+        return images.length === 1 ? imageAspects.get(images[0].id) : undefined;
+      });
+      const flexes = aspects.every((a) => a !== undefined)
+        ? ratios.map((r, i) => r * (aspects[i] as number))
+        : ratios;
+      const divs = htmlPerColumn.map(
+        (html, i) =>
+          `<div style="flex:${flexes[i].toFixed(3)};min-width:0">${html}</div>`,
       );
       return `<div class="image-row">${divs.join('')}</div>`;
     }
