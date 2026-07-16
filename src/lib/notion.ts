@@ -105,20 +105,28 @@ async function blockToMarkdown(block: BlockObjectResponse): Promise<string> {
     case 'divider':
       return '---';
 
-    case 'image': {
-      const url =
-        block.image.type === 'external'
-          ? block.image.external.url
-          : await downloadImage(block.image.file.url, block.id);
-      const caption = block.image.caption.length
-        ? richTextToPlain(block.image.caption)
-        : '';
-      return `![${caption}](${url})`;
+    case 'image':
+      return imageToHtml(block);
+
+    // Side-by-side layouts: emit a flex row preserving Notion's column width
+    // ratios. Markdown can't express columns, so this is raw HTML.
+    case 'column_list': {
+      const columns = (await listChildren(block.id)).filter(
+        (c) => c.type === 'column',
+      );
+      const divs = await Promise.all(
+        columns.map(async (col) => {
+          const ratio =
+            col.type === 'column' ? (col.column?.width_ratio ?? 1) : 1;
+          const children = await Promise.all(
+            (await listChildren(col.id)).map(blockToHtml),
+          );
+          return `<div style="flex:${ratio};min-width:0">${children.join('')}</div>`;
+        }),
+      );
+      return `<div class="image-row">${divs.join('')}</div>`;
     }
 
-    // Side-by-side layouts nest content inside column blocks; recurse into
-    // them (rendered stacked — markdown has no columns).
-    case 'column_list':
     case 'column':
       return fetchPageContent(block.id);
 
@@ -133,28 +141,76 @@ async function blockToMarkdown(block: BlockObjectResponse): Promise<string> {
   }
 }
 
-async function fetchPageContent(pageId: string): Promise<string> {
-  const blocks: string[] = [];
+function richTextToHtml(richText: RichTextItemResponse[]): string {
+  return richText
+    .map((t) => {
+      let text = t.plain_text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      if (t.annotations.code) text = `<code>${text}</code>`;
+      if (t.annotations.bold) text = `<strong>${text}</strong>`;
+      if (t.annotations.italic) text = `<em>${text}</em>`;
+      if (t.annotations.strikethrough) text = `<s>${text}</s>`;
+      if (t.href) text = `<a href="${t.href}">${text}</a>`;
+      return text;
+    })
+    .join('');
+}
+
+// ponytail: columns support only paragraphs and images; extend if other
+// block types ever show up inside Notion columns.
+async function blockToHtml(block: BlockObjectResponse): Promise<string> {
+  switch (block.type) {
+    case 'image':
+      return imageToHtml(block);
+    case 'paragraph': {
+      const html = richTextToHtml(block.paragraph.rich_text);
+      return html.trim() ? `<p>${html}</p>` : '';
+    }
+    default:
+      console.warn(`  skipping unsupported block in column: ${block.type}`);
+      return '';
+  }
+}
+
+async function imageToHtml(block: BlockObjectResponse): Promise<string> {
+  if (block.type !== 'image') return '';
+  const url =
+    block.image.type === 'external'
+      ? block.image.external.url
+      : await downloadImage(block.image.file.url, block.id);
+  const caption = richTextToPlain(block.image.caption);
+  const alt = caption.replace(/"/g, '&quot;');
+  const figcaption = caption ? `<figcaption>${caption}</figcaption>` : '';
+  return `<figure><img src="${url}" alt="${alt}" />${figcaption}</figure>`;
+}
+
+async function listChildren(blockId: string): Promise<BlockObjectResponse[]> {
+  const blocks: BlockObjectResponse[] = [];
   let cursor: string | undefined;
 
   do {
     const response = await notion.blocks.children.list({
-      block_id: pageId,
+      block_id: blockId,
       start_cursor: cursor,
       page_size: 100,
     });
 
     for (const block of response.results) {
-      if ('type' in block) {
-        const md = await blockToMarkdown(block as BlockObjectResponse);
-        blocks.push(md);
-      }
+      if ('type' in block) blocks.push(block as BlockObjectResponse);
     }
 
     cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined;
   } while (cursor);
 
-  return blocks.join('\n\n');
+  return blocks;
+}
+
+async function fetchPageContent(pageId: string): Promise<string> {
+  const blocks = await listChildren(pageId);
+  const md = await Promise.all(blocks.map(blockToMarkdown));
+  return md.join('\n\n');
 }
 
 // --- Database query ---

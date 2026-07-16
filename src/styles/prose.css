@@ -92,6 +92,45 @@
   margin-block: var(--space-6);
 }
 
+.prose figure {
+  margin-block: var(--space-6);
+}
+
+.prose figure img {
+  width: 100%;
+  margin-block: 0;
+}
+
+.prose figcaption {
+  margin-top: var(--space-2);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+/* Side-by-side images synced from Notion columns; flex ratios mirror
+   Notion's column widths. */
+.prose .image-row {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  margin-block: var(--space-6);
+}
+
+.prose .image-row figure {
+  margin-block: 0;
+}
+
+@media (max-width: 480px) {
+  .prose .image-row {
+    flex-direction: column;
+  }
+
+  .prose .image-row > div {
+    flex: 1 1 auto !important;
+  }
+}
+
 .prose hr {
   margin-block: var(--space-12);
 }
