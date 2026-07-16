@@ -22,6 +22,7 @@ import type {
 const NOTION_TOKEN = process.env.NOTION_TOKEN ?? '';
 const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID ?? '';
 const BLOG_DIR = path.resolve(import.meta.dirname ?? '.', '../content/blog');
+const IMAGES_DIR = path.resolve(import.meta.dirname ?? '.', '../../public/images/blog');
 
 if (!NOTION_TOKEN || !NOTION_DATABASE_ID) {
   console.error('Missing NOTION_TOKEN or NOTION_DATABASE_ID in .env');
@@ -48,6 +49,18 @@ function richTextToMarkdown(richText: RichTextItemResponse[]): string {
       return text;
     })
     .join('');
+}
+
+// Notion-hosted images use signed S3 URLs that expire after 1 hour, so
+// download them to public/ and reference the permanent local path instead.
+async function downloadImage(url: string, blockId: string): Promise<string> {
+  const ext = path.extname(new URL(url).pathname) || '.png';
+  const filename = `${blockId}${ext}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Image download failed (${res.status}): ${url}`);
+  fs.mkdirSync(IMAGES_DIR, { recursive: true });
+  fs.writeFileSync(path.join(IMAGES_DIR, filename), Buffer.from(await res.arrayBuffer()));
+  return `/images/blog/${filename}`;
 }
 
 // --- Block-to-Markdown conversion ---
@@ -96,7 +109,7 @@ async function blockToMarkdown(block: BlockObjectResponse): Promise<string> {
       const url =
         block.image.type === 'external'
           ? block.image.external.url
-          : block.image.file.url;
+          : await downloadImage(block.image.file.url, block.id);
       const caption = block.image.caption.length
         ? richTextToPlain(block.image.caption)
         : '';
@@ -175,12 +188,19 @@ async function fetchDonePosts(): Promise<NotionPost[]> {
           ? richTextToPlain(titleProp.title)
           : 'Untitled';
 
-      // Slug
+      // Slug — fall back to slugified title when the Slug property is empty
       const slugProp = props['Slug'];
+      const slugFromProp =
+        slugProp?.type === 'rich_text' ? richTextToPlain(slugProp.rich_text).trim() : '';
       const slug =
-        slugProp?.type === 'rich_text'
-          ? richTextToPlain(slugProp.rich_text)
-          : title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        slugFromProp ||
+        title
+          .normalize('NFKD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '') ||
+        page.id;
 
       // Published Date
       const dateProp = props['Published Date'];
