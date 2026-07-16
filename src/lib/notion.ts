@@ -116,6 +116,12 @@ async function blockToMarkdown(block: BlockObjectResponse): Promise<string> {
       return `![${caption}](${url})`;
     }
 
+    // Side-by-side layouts nest content inside column blocks; recurse into
+    // them (rendered stacked — markdown has no columns).
+    case 'column_list':
+    case 'column':
+      return fetchPageContent(block.id);
+
     case 'bookmark':
       return block.bookmark.url;
 

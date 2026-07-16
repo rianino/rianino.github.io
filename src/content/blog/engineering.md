@@ -33,7 +33,21 @@ You satisfy reality’s personality through art and expression (although good be
 
 While in the grandiose soviet buildings everything is orderly and symmetric (see the Palace of Culture and Science in Warsaw), the great Cathedrals—like Bach’s variations—mix symmetry with exploration, dynamism, emotion, and fractality—especially in the details (exactly where the devil is said to lie). Rome fell, ancient egypt fell, the soviet union fell, and most religions fell too. The beautiful kept maintenance, and so we still have the egyptian pyrammids and the colosseum, but we have a lot more churches and mosques—because they are more beautiful, closer to the truth, and converge to similar ideas. The largest families tend to come from more beautiful women, and larger and longer lasting lineages arise as a result (Jokela, 2009), but the highest predictor of a large and long-lasting family is religious affiliation.
 
+![The Palace of Culture and Science, Warsaw](/images/blog/3342b1e2-dfbd-8022-80f2-f2814514ded2.png)
 
+
+
+
+
+![Interior details (or lack thereof) of the Palace of Culture and Science](/images/blog/3342b1e2-dfbd-80d8-9741-f607b774e846.png)
+
+
+
+![The Notre Dame Cathedral in Paris](/images/blog/3342b1e2-dfbd-8003-833b-ea4bfb42dddb.png)
+
+
+
+![Detailed view of an arch on the Notre Dame](/images/blog/3342b1e2-dfbd-809f-9a90-cf2950320ea1.png)
 
 
 
@@ -55,6 +69,12 @@ Beauty, then, has a puritan or infantile aspect to it, at least in the same way 
 - Painting is the oldest form of art. It’s a freeform manifestation of imagination. Paintings are beautiful when they are fractal and detailed, but mainly when they carry meaning—just like the journey-to-and-fro-home in music. The paintings in the Sistine Chapel are exactly that: beautiful from afar, and from close up, at every scale. Every detail is though through—proportions, perspectives. 
 
 
+
+![Sistine chapel interior](/images/blog/35e2b1e2-dfbd-8024-9f1a-cd8a11415b51.png)
+
+
+
+![The creation of Adam](/images/blog/35e2b1e2-dfbd-8097-8376-e8a25dc8a535.png)
 
 These pieces are what define the great people of the past. But so do great war strategists and entrepreneurs.
 

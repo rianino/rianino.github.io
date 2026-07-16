@@ -35,12 +35,6 @@ O roteiro de fabrico pode ter associado o consumo teórico de material antes do 
 
 Controlo de qualidade na maioria dos casos é busy work - nunca se resolve o problema base. Para haver um bom cotrolo de qualidade, a nossa plataforma junta-a a todo o resto da informação que vai com o roteiro de fabrico, e com base no tipo de inconformidade, consegue prever a causa, dando um score de qualidade à máquina ou pessoa que fez essa operação - passa a ser um problema com solução. E mais uma vez, isto tem que ter associado o dinheiro que isto está a custar, senão as pessoas não vão olhar para um score de qualidade baixo com seriedade. A kaizen caga no controlo de qualidade por não ter solução. Nós fazemos a solução.
 
----
-
-IndustryOS está above, abaixo está o ERP, produto superior.
-
-Extra:
-
 Trabalhar com consumo de material significa trabalhar com stock, e trabalhar com stock é das coisas mais complexas.
 
 Se a fábrica produz para stock temos que definir stock mínimo, ponto de encomenda, etc. Isso pode-se fazer automáticamente também - é tempo desperdiçado se estiver um humano nesse loop - é um aumento do time to market (que a kaizen tambem nao considera).
