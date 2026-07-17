@@ -1,34 +1,20 @@
 ---
-// Codex "moto dell'acqua" — 900 streamlines advected through a seeded vector
-// field, inked stroke by stroke. Click reseeds. No dependencies.
+// Codex "moto dell'acqua" — streamlines advected through a seeded vector field,
+// inked stroke by stroke, as a dim full-viewport background. Click reseeds.
+// No dependencies.
 ---
 
-<figure class="flowfig">
-  <canvas id="cflow"></canvas>
-  <figcaption>
-    <span class="mono">Fig. — Moto dell'acqua</span>
-    <span class="mono studyno" id="studyno">Study 0001</span>
-  </figcaption>
-</figure>
+<canvas id="cflow" aria-hidden="true"></canvas>
 
 <style>
-  .flowfig {
-    position: relative;
-    border: 1px solid var(--color-border-strong);
-    padding: var(--space-3);
-  }
   #cflow {
-    width: 100%;
-    display: block;
-    cursor: crosshair;
-  }
-  .flowfig figcaption {
-    margin-top: var(--space-2);
-    display: flex;
-    justify-content: space-between;
-  }
-  .studyno {
-    color: var(--color-lapis);
+    position: fixed;
+    inset: 12px; /* sit inside the framed sheet */
+    width: calc(100% - 24px);
+    height: calc(100% - 24px);
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.4;
   }
 </style>
 
@@ -38,7 +24,6 @@
     if (!c) return;
     const ctx = c.getContext('2d');
     let seed = 1;
-    const label = document.getElementById('studyno');
     function rng(s) {
       return function () {
         s |= 0; s = (s + 0x6d2b79f5) | 0;
@@ -54,10 +39,10 @@
     let raf;
     function draw() {
       cancelAnimationFrame(raf);
-      const w = c.clientWidth || 480,
-        h = Math.round(w * 0.72),
+      const w = c.clientWidth || innerWidth,
+        h = c.clientHeight || innerHeight,
         dpr = Math.min(devicePixelRatio, 2);
-      c.width = w * dpr; c.height = h * dpr; c.style.height = h + 'px';
+      c.width = w * dpr; c.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
       const R = rng(seed * 2654435761);
       const a1 = R() * 6, a2 = R() * 6, f1 = 1.5 + R() * 2, f2 = 1.5 + R() * 2, sw = R() * 2 * Math.PI;
@@ -65,8 +50,10 @@
         const u = x / w, v = y / h;
         return Math.sin(u * f1 * 3 + a1) * 1.4 + Math.cos(v * f2 * 3 + a2) * 1.4 + Math.sin((u + v) * 4 + sw) * 0.6;
       }
+      // Scale streamline count to the area so a wide viewport stays covered.
+      const count = Math.min(1600, Math.round((w * h) / 360));
       const lines = [];
-      for (let i = 0; i < 900; i++) {
+      for (let i = 0; i < count; i++) {
         let x = R() * w, y = R() * h; const pts = [[x, y]];
         const steps = 26 + ((R() * 30) | 0);
         for (let s = 0; s < steps; s++) {
@@ -76,17 +63,16 @@
         if (pts.length > 6) lines.push({ pts, lapis: R() < 0.055 });
       }
       const ink = inkColor();
-      label.textContent = 'Study ' + String(seed).padStart(4, '0');
       let k = 0;
       function frame() {
-        const batch = reduce ? lines.length : 26;
+        const batch = reduce ? lines.length : 30;
         for (let n = 0; n < batch && k < lines.length; n++, k++) {
           const L = lines[k];
           ctx.beginPath(); ctx.moveTo(L.pts[0][0], L.pts[0][1]);
           for (const p of L.pts) ctx.lineTo(p[0], p[1]);
-          ctx.strokeStyle = L.lapis ? 'rgba(36,71,160,0.75)' : ink;
-          ctx.globalAlpha = L.lapis ? 1 : 0.5;
-          ctx.lineWidth = L.lapis ? 0.9 : 0.6;
+          ctx.strokeStyle = L.lapis ? 'rgba(36,71,160,0.55)' : ink;
+          ctx.globalAlpha = L.lapis ? 1 : 0.35;
+          ctx.lineWidth = L.lapis ? 0.8 : 0.5;
           ctx.stroke();
         }
         ctx.globalAlpha = 1;
@@ -94,9 +80,11 @@
       }
       frame();
     }
-    c.addEventListener('click', () => { seed++; draw(); });
+    // Click anywhere reseeds (canvas ignores pointer events, so listen on window).
+    addEventListener('click', () => { seed++; draw(); });
     draw();
-    addEventListener('resize', () => draw());
+    let rt;
+    addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(draw, 150); });
     // Redraw ink color when the theme toggles.
     new MutationObserver(() => draw()).observe(document.documentElement, {
       attributes: true, attributeFilter: ['data-theme'],

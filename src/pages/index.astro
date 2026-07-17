@@ -18,31 +18,25 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft))
 ---
 
 <BaseLayout title="Rian Apolo">
-  <div class="hero">
+  <FlowField />
+  <div class="veil">
     <Bio />
-    <FlowField />
+    <hr />
+    <BlogPostList posts={posts} />
   </div>
-  <hr />
-  <BlogPostList posts={posts} />
 </BaseLayout>
 
 <style>
-  .hero {
-    display: grid;
-    grid-template-columns: 1.618fr 1fr;
-    gap: var(--space-8);
-    align-items: center;
-  }
-
-  /* Bio already pads itself; let the figure sit tight in the hero. */
-  .hero :global(.bio) {
+  /* Content floats on the water study; a soft white wash keeps text legible
+     and lets the edges dissolve into the flow field behind it. */
+  .veil {
+    position: relative;
     padding-block: var(--space-8);
-  }
-
-  @media (max-width: 720px) {
-    .hero {
-      grid-template-columns: 1fr;
-      gap: var(--space-4);
-    }
+    background: radial-gradient(
+      120% 100% at 50% 30%,
+      var(--color-bg) 55%,
+      color-mix(in srgb, var(--color-bg) 70%, transparent) 78%,
+      transparent 100%
+    );
   }
 </style>
