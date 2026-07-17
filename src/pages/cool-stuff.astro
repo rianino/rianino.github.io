@@ -13,9 +13,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </a>
     <p class="open-link"><a href="/cool-stuff/pizza-cfd.html" target="_blank" rel="noopener">Open the interactive visualization →</a></p>
     <p>
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-      incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
-      nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+      A pizza comes out of the oven at 90 °C. How long until it cools to 60 °C — ready to
+      eat — and does it matter whether you leave it on the counter (20 °C) or stick it in
+      the fridge (5 °C)? On a rack or on a plate? I simulated all eight combinations
+      (counter/fridge × rack/plate × with/without thermal radiation) as 2D buoyant-flow
+      cases in OpenFOAM and built this visualization from the resulting temperature fields.
+    </p>
+    <p>
+      The verdict: fridge + rack + radiation gets you eating in about 8.5 minutes, while a
+      pizza on a plate at room temperature still wasn't at 60 °C when the 25-minute
+      simulation ended. The rack wins because the buoyant plume can pull cool air past the
+      underside; radiation turns out to matter a lot, roughly halving the cooling times.
     </p>
   </section>
 
@@ -25,8 +33,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <iframe src="/cool-stuff/stress-visualizer.html" title="Stress state visualizer" loading="lazy"></iframe>
     <p class="open-link"><a href="/cool-stuff/stress-visualizer.html" target="_blank" rel="noopener">Open full screen →</a></p>
     <p>
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis aute irure dolor
-      in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+      Type in the six components of a stress tensor and watch the 3D stress state at a
+      point come alive: the stress cube, principal stresses and their directions,
+      octahedral planes, Mohr's three circles, invariants, the deviatoric tensor, and the
+      von Mises and Tresca yield criteria — all updating live. You can also probe the
+      traction on any plane by pointing its normal. I built it because rotating a stress
+      cube in your head during a Solid Mechanics exam is exactly as hard as it sounds.
     </p>
   </section>
 
@@ -36,16 +48,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <iframe src="/cool-stuff/nvm-diagrams.html" title="Beam internal force diagrams" loading="lazy"></iframe>
     <p class="open-link"><a href="/cool-stuff/nvm-diagrams.html" target="_blank" rel="noopener">Open full screen →</a></p>
     <p>
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Excepteur sint occaecat
-      cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+      An interactive beam calculator: choose the supports, set the geometry and loads, and
+      it draws the axial force (N), shear force (V) and bending moment (M) diagrams, with
+      support reactions and a cut section you can slide along the beam to see the internal
+      forces at any point.
     </p>
     <div class="image-pair">
       <img src="/images/cool-stuff/distribuicao-tensoes.png" alt="Stress distribution in a beam cross-section" loading="lazy" />
       <img src="/images/cool-stuff/empenamento.png" alt="Cross-section warping visualization" loading="lazy" />
     </div>
     <p>
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ut perspiciatis unde
-      omnis iste natus error sit voluptatem accusantium doloremque laudantium.
+      The renders above go one level deeper, from internal forces to stresses. On the left,
+      how the bending moment and shear force of a simply supported beam distribute across a
+      rectangular cross-section: normal stress linear in height (σ = My/I), shear stress
+      parabolic (τ = VQ/Ib). On the right, St. Venant torsion warping — a circular section
+      stays plane under torsion, but a square one warps out of its own plane.
     </p>
   </section>
 
@@ -54,9 +71,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <p class="project-meta">3DOF / 6DOF flight dynamics · Python · INVICTUS II</p>
     <img src="/images/cool-stuff/rocket-3dof.png" alt="3DOF rocket trajectory simulation" loading="lazy" />
     <p>
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nemo enim ipsam
-      voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur
-      magni dolores eos qui ratione voluptatem sequi nesciunt.
+      Flight simulation work for INVICTUS II, our student rocket for EuRoC. RocketPy 6DOF
+      simulations verify the launch requirements before anything flies: rail-exit velocity
+      of 32.8 m/s (the competition requires 30), a predicted apogee of about 3 150 m AGL
+      against the 3 000 m target, and a stability margin that stays close to 3.9 calibers
+      through the burn. The plot above is from Flight Forge, a lighter 3DOF simulator we
+      wrote for the early design phase, when you don't yet know the inertia tensor but
+      still need fast answers on apogee, rail-exit speed and parachute descent rates.
+      Rounding it out, OpenFOAM CFD runs of the airframe at 30–240 m/s feed the drag data.
     </p>
   </section>
 </BaseLayout>
