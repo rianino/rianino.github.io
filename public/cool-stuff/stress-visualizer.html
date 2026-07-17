@@ -1,0 +1,2299 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visualizador de Estado de Tensão</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+/* ============================================================
+   GLOBAL STYLES
+   ============================================================ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16213e;
+  --bg-panel: #0f3460;
+  --bg-input: #1a1a3e;
+  --bg-card: #1e2a4a;
+  --text-primary: #e8e8f0;
+  --text-secondary: #a0a0c0;
+  --text-dim: #6a6a8a;
+  --accent-red: #e74c3c;
+  --accent-blue: #3498db;
+  --accent-green: #2ecc71;
+  --accent-yellow: #f1c40f;
+  --accent-orange: #e67e22;
+  --border: #2a2a4e;
+  --border-light: #3a3a5e;
+  --slider-track: #2a2a4e;
+  --slider-thumb: #3498db;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* ============================================================
+   TABS
+   ============================================================ */
+.tab-bar {
+  display: flex;
+  background: var(--bg-secondary);
+  border-bottom: 2px solid var(--border);
+  height: 52px;
+}
+
+.tab-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 14px 20px;
+  transition: all 0.3s;
+  border-bottom: 3px solid transparent;
+  font-family: inherit;
+  letter-spacing: 0.3px;
+}
+
+.tab-btn:hover { color: var(--text-primary); background: rgba(52,152,219,0.1); }
+.tab-btn.active {
+  color: var(--accent-blue);
+  border-bottom-color: var(--accent-blue);
+  background: rgba(52,152,219,0.08);
+}
+
+.tab-content {
+  display: none;
+  height: calc(100vh - 52px);
+  overflow: hidden;
+}
+.tab-content.active { display: flex; }
+
+/* ============================================================
+   PANELS
+   ============================================================ */
+.panel {
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  padding: 16px;
+  margin: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  overflow-y: auto;
+}
+
+.panel h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-blue);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+}
+
+.panel h4 {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 10px 0 6px;
+}
+
+/* ============================================================
+   SLIDER STYLING
+   ============================================================ */
+.slider-group {
+  margin-bottom: 10px;
+}
+
+.slider-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  margin-bottom: 3px;
+}
+
+.slider-label .name {
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.slider-label .name sub {
+  font-size: 0.75em;
+}
+
+.slider-label .value {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: var(--accent-yellow);
+  min-width: 80px;
+  text-align: right;
+  font-weight: 500;
+}
+
+/* Color dot before slider name */
+.slider-normal .slider-label .name::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-red);
+  flex-shrink: 0;
+}
+
+.slider-shear .slider-label .name::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  flex-shrink: 0;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 7px;
+  background: var(--slider-track);
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--slider-thumb);
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(52,152,219,0.5);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--slider-thumb);
+  cursor: pointer;
+  border: none;
+}
+
+/* Color-coded sliders */
+.slider-normal input[type="range"]::-webkit-slider-thumb { background: var(--accent-red); box-shadow: 0 0 6px rgba(231,76,60,0.5); }
+.slider-normal input[type="range"]::-moz-range-thumb { background: var(--accent-red); }
+.slider-shear input[type="range"]::-webkit-slider-thumb { background: var(--accent-green); box-shadow: 0 0 6px rgba(46,204,113,0.5); }
+.slider-shear input[type="range"]::-moz-range-thumb { background: var(--accent-green); }
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn {
+  display: inline-block;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin: 2px;
+  font-family: inherit;
+}
+
+.btn:hover { background: var(--accent-blue); border-color: var(--accent-blue); }
+.btn.active { background: var(--accent-blue); border-color: var(--accent-blue); }
+
+.preset-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+/* ============================================================
+   INFO DISPLAY
+   ============================================================ */
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(42,42,78,0.5);
+}
+
+.info-row:last-child { border-bottom: none; }
+.info-row .label { color: var(--text-secondary); }
+.info-row .label sub { font-size: 0.75em; }
+.info-row .val {
+  font-family: 'Courier New', monospace;
+  color: var(--accent-yellow);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Stress bar graph */
+.stress-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  font-size: 14px;
+}
+
+.stress-bar-label {
+  min-width: 28px;
+  font-weight: 600;
+}
+
+.stress-bar-track {
+  flex: 1;
+  height: 18px;
+  background: var(--bg-input);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stress-bar-fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s, left 0.3s;
+}
+
+.stress-bar-value {
+  min-width: 80px;
+  text-align: right;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Matrix as a table */
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+}
+
+.matrix-table td {
+  text-align: center;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+}
+
+.matrix-table .bracket-left {
+  border: none;
+  background: none;
+  width: 8px;
+  padding: 0;
+  font-size: 40px;
+  color: var(--accent-blue);
+  line-height: 0.8;
+}
+
+.matrix-table .bracket-right {
+  border: none;
+  background: none;
+  width: 8px;
+  padding: 0;
+  font-size: 40px;
+  color: var(--accent-blue);
+  line-height: 0.8;
+}
+
+/* Colored matrix cells */
+.matrix-table td.normal { color: var(--accent-red); font-weight: 600; }
+.matrix-table td.shear { color: var(--accent-green); }
+
+/* Separator */
+.section-sep {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 10px 0;
+}
+
+/* ============================================================
+   CHECKBOX
+   ============================================================ */
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+  font-size: 14px;
+}
+
+.checkbox-group input[type="checkbox"] {
+  accent-color: var(--accent-blue);
+  width: 18px;
+  height: 18px;
+}
+
+/* ============================================================
+   TOOLTIP
+   ============================================================ */
+.has-tooltip {
+  position: relative;
+  cursor: help;
+  border-bottom: 1px dotted var(--text-dim);
+}
+
+.has-tooltip .tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #222;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.has-tooltip:hover .tooltip { display: block; }
+
+/* ============================================================
+   TAB 1 LAYOUT
+   ============================================================ */
+#tab1 {
+  flex-direction: row;
+}
+
+#tab1 .controls-panel {
+  width: 300px;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+#tab1 .viz-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+#tab1 .viz-3d {
+  flex: 1;
+  position: relative;
+}
+
+#tab1 .info-panel {
+  height: 260px;
+  min-height: 220px;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+}
+
+#tab1 .info-panel .panel { flex: 1; }
+
+/* ============================================================
+   TAB 2 LAYOUT
+   ============================================================ */
+#tab2 {
+  flex-direction: column;
+}
+
+#tab2 .top-controls {
+  display: flex;
+  align-items: center;
+  padding: 8px 14px;
+  background: var(--bg-secondary);
+  gap: 14px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+}
+
+#tab2 .main-area {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+#tab2 .left-side, #tab2 .right-side {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+#tab2 .canvas-wrap {
+  flex: 1;
+  position: relative;
+}
+
+#tab2 .mohr-info {
+  height: 110px;
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+/* ============================================================
+   TAB 3 LAYOUT — three columns: controls | 3D | results
+   ============================================================ */
+#tab3 {
+  flex-direction: row;
+}
+
+#tab3 .controls-panel {
+  width: 290px;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+#tab3 .viz-area {
+  flex: 1;
+  position: relative;
+  min-width: 300px;
+}
+
+#tab3 .results-panel {
+  width: 340px;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+/* ============================================================
+   NORMAL INPUT
+   ============================================================ */
+.input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 6px 0;
+}
+
+.input-group label {
+  font-size: 14px;
+  min-width: 30px;
+}
+
+.input-group label sub { font-size: 0.75em; }
+
+.input-group input[type="number"] {
+  width: 76px;
+  padding: 6px 8px;
+  font-size: 14px;
+  font-family: 'Courier New', monospace;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.input-group input[type="number"]:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 4px rgba(52,152,219,0.3);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* Canvas overlays */
+.tensor-overlay {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(22,33,62,0.92);
+  border-radius: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  z-index: 10;
+  min-width: 220px;
+}
+
+.tensor-overlay .title {
+  text-align: center;
+  color: var(--accent-blue);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+/* Color legend */
+.color-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+.color-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.color-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* Description box */
+.desc-box {
+  background: rgba(52,152,219,0.08);
+  border: 1px solid rgba(52,152,219,0.2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.desc-box b { color: var(--text-primary); }
+.desc-box .formula {
+  display: block;
+  text-align: center;
+  font-size: 16px;
+  margin: 6px 0;
+  color: var(--accent-yellow);
+  font-family: 'Courier New', monospace;
+}
+
+/* Cauchy calculation steps */
+.calc-step {
+  background: var(--bg-input);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 8px 0;
+  border-left: 3px solid var(--accent-blue);
+}
+
+.calc-step .step-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 6px;
+}
+
+.calc-step .step-content {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+  #tab1 .controls-panel { width: 260px; min-width: 220px; }
+  #tab3 .controls-panel { width: 250px; min-width: 220px; }
+  #tab3 .results-panel { width: 280px; min-width: 240px; }
+}
+
+@media (max-width: 768px) {
+  body { overflow: auto; height: auto; min-height: 100vh; }
+
+  .tab-bar { height: auto; flex-wrap: wrap; }
+  .tab-btn { font-size: 13px; padding: 10px 8px; flex: none; width: 33.33%; }
+
+  .tab-content { height: auto; min-height: calc(100vh - 52px); }
+  .tab-content.active { flex-direction: column; }
+
+  /* TAB 1 */
+  #tab1 { flex-direction: column !important; }
+  #tab1 .controls-panel { width: 100% !important; min-width: 0 !important; max-height: none; }
+  #tab1 .viz-area { min-height: 400px; }
+  #tab1 .viz-3d { min-height: 350px; }
+  #tab1 .info-panel { height: auto; min-height: 0; flex-direction: column; }
+  #tab1 .info-panel .panel { min-height: 80px; }
+
+  /* TAB 2 */
+  #tab2 .main-area { flex-direction: column; }
+  #tab2 .left-side, #tab2 .right-side { min-height: 350px; }
+  #tab2 .canvas-wrap { min-height: 280px; }
+  #tab2 .top-controls { flex-direction: column; gap: 8px; }
+  #tab2 .top-controls .slider-group { min-width: 100% !important; }
+  #tab2 .mohr-info { height: auto; }
+
+  /* TAB 3 */
+  #tab3 { flex-direction: column !important; }
+  #tab3 .controls-panel { width: 100% !important; min-width: 0 !important; }
+  #tab3 .viz-area { min-height: 350px; }
+  #tab3 .results-panel { width: 100% !important; min-width: 0 !important; }
+
+  .tensor-overlay { position: relative; top: 0; right: 0; margin: 6px; min-width: 0; }
+  .desc-box { font-size: 12px; }
+}
+
+@media (max-width: 480px) {
+  .tab-btn { font-size: 11px; padding: 8px 4px; }
+  .panel { padding: 10px; margin: 4px; }
+  .panel h3 { font-size: 12px; }
+  .slider-label .name { font-size: 13px; }
+  .slider-label .value { font-size: 12px; min-width: 60px; }
+  .preset-grid { gap: 3px; }
+  .btn { padding: 5px 8px; font-size: 11px; }
+  .info-row { font-size: 12px; }
+  .calc-step .step-content { font-size: 11px; overflow-x: auto; }
+  #tab1 .viz-3d { min-height: 280px; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     TAB BAR
+     ============================================================ -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab(0)">&#9634; Cubo de Tensão 3D</button>
+  <button class="tab-btn" onclick="switchTab(1)">&#9711; Estado Plano &amp; Mohr 2D</button>
+  <button class="tab-btn" onclick="switchTab(2)">&#9650; Lei de Cauchy Interativa</button>
+</div>
+
+<!-- ============================================================
+     TAB 1 — CUBO 3D
+     ============================================================ -->
+<div id="tab1" class="tab-content active">
+  <div class="controls-panel">
+    <div class="panel">
+      <div class="desc-box">
+        <b>Tensor de tensão 3D</b> — Representa o estado de tensão num ponto material através de um elemento infinitesimal (cubo).
+        As 6 componentes independentes (3 normais + 3 de corte) definem completamente o tensor simétrico [σ].
+        <b>Vermelho</b> = tração, <b>azul</b> = compressão, <b>verde</b> = corte.
+      </div>
+      <h3>Componentes de Tensão</h3>
+
+      <div class="slider-group slider-normal">
+        <div class="slider-label">
+          <span class="name has-tooltip">σ<sub>xx</sub>
+            <span class="tooltip">Tensão normal na face x, direcção x. Positivo = tração.</span>
+          </span>
+          <span class="value" id="v_sxx">0 MPa</span>
+        </div>
+        <input type="range" id="s_sxx" min="-150" max="150" value="0" oninput="updateTab1()">
+      </div>
+
+      <div class="slider-group slider-normal">
+        <div class="slider-label">
+          <span class="name has-tooltip">σ<sub>yy</sub>
+            <span class="tooltip">Tensão normal na face y, direcção y. Positivo = tração.</span>
+          </span>
+          <span class="value" id="v_syy">0 MPa</span>
+        </div>
+        <input type="range" id="s_syy" min="-150" max="150" value="0" oninput="updateTab1()">
+      </div>
+
+      <div class="slider-group slider-normal">
+        <div class="slider-label">
+          <span class="name has-tooltip">σ<sub>zz</sub>
+            <span class="tooltip">Tensão normal na face z, direcção z. Positivo = tração.</span>
+          </span>
+          <span class="value" id="v_szz">0 MPa</span>
+        </div>
+        <input type="range" id="s_szz" min="-150" max="150" value="0" oninput="updateTab1()">
+      </div>
+
+      <div class="slider-group slider-shear">
+        <div class="slider-label">
+          <span class="name has-tooltip">τ<sub>xy</sub>
+            <span class="tooltip">Tensão de corte na face x, direcção y (= τ<sub>yx</sub>).</span>
+          </span>
+          <span class="value" id="v_txy">0 MPa</span>
+        </div>
+        <input type="range" id="s_txy" min="-150" max="150" value="0" oninput="updateTab1()">
+      </div>
+
+      <div class="slider-group slider-shear">
+        <div class="slider-label">
+          <span class="name has-tooltip">τ<sub>xz</sub>
+            <span class="tooltip">Tensão de corte na face x, direcção z (= τ<sub>zx</sub>).</span>
+          </span>
+          <span class="value" id="v_txz">0 MPa</span>
+        </div>
+        <input type="range" id="s_txz" min="-150" max="150" value="0" oninput="updateTab1()">
+      </div>
+
+      <div class="slider-group slider-shear">
+        <div class="slider-label">
+          <span class="name has-tooltip">τ<sub>yz</sub>
+            <span class="tooltip">Tensão de corte na face y, direcção z (= τ<sub>zy</sub>).</span>
+          </span>
+          <span class="value" id="v_tyz">0 MPa</span>
+        </div>
+        <input type="range" id="s_tyz" min="-150" max="150" value="0" oninput="updateTab1()">
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Presets</h3>
+      <div class="preset-grid">
+        <button class="btn" onclick="setPreset3D('uniaxial')">Tração uniaxial</button>
+        <button class="btn" onclick="setPreset3D('biaxial')">Compressão biaxial</button>
+        <button class="btn" onclick="setPreset3D('shear')">Corte puro</button>
+        <button class="btn" onclick="setPreset3D('hydro')">Hidrostático</button>
+        <button class="btn" onclick="setPreset3D('general')">Estado geral</button>
+        <button class="btn" onclick="setPreset3D('test1')">Problema 1</button>
+        <button class="btn" onclick="setPreset3D('test2')">Problema 2</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Opções</h3>
+      <div class="checkbox-group">
+        <input type="checkbox" id="chk_principal" onchange="updateTab1()">
+        <label for="chk_principal">Mostrar tensões principais</label>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="chk_octahedral" onchange="updateTab1()">
+        <label for="chk_octahedral" class="has-tooltip">Mostrar planos octaédricos
+          <span class="tooltip">Planos cuja normal faz ângulos iguais com os 3 eixos principais. Formam um octaedro regular.</span>
+        </label>
+      </div>
+      <div class="color-legend">
+        <div class="color-legend-item"><div class="color-swatch" style="background:#e74c3c;"></div> Tração</div>
+        <div class="color-legend-item"><div class="color-swatch" style="background:#3498db;"></div> Compressão</div>
+        <div class="color-legend-item"><div class="color-swatch" style="background:#2ecc71;"></div> Corte</div>
+        <div class="color-legend-item"><div class="color-swatch" style="background:#f1c40f;"></div> Principais</div>
+        <div class="color-legend-item"><div class="color-swatch" style="background:#9b59b6;opacity:0.6;"></div> Octaedro</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="viz-area">
+    <div class="viz-3d" id="container3d">
+      <div class="tensor-overlay" id="tensor-display"></div>
+    </div>
+    <div class="info-panel">
+      <div class="panel" id="info-principal">
+        <h3>Tensões Principais</h3>
+        <div id="principal-values"></div>
+      </div>
+      <div class="panel" id="info-invariants">
+        <h3>Invariantes &amp; Critérios</h3>
+        <div id="invariant-values"></div>
+      </div>
+      <div class="panel" id="info-deviatoric">
+        <h3>Tensor Desviador</h3>
+        <div id="deviatoric-values"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     TAB 2 — MOHR 2D
+     ============================================================ -->
+<div id="tab2" class="tab-content">
+  <div class="top-controls">
+    <div class="desc-box" style="flex-basis:100%;margin-bottom:4px;">
+      <b>Estado plano de tensão &amp; Círculo de Mohr</b> — À esquerda, o elemento 2D roda com o ângulo θ e mostra as tensões transformadas (σ<sub>x'</sub>, σ<sub>y'</sub>, τ<sub>x'y'</sub>). À direita, o Círculo de Mohr representa graficamente todas as combinações possíveis de (σ, τ) para o mesmo estado de tensão. O ponto <b style="color:var(--accent-orange);">P</b> percorre o círculo quando θ varia.
+    </div>
+    <div class="slider-group slider-normal" style="flex:1;min-width:160px;">
+      <div class="slider-label">
+        <span class="name has-tooltip">σ<sub>x</sub><span class="tooltip">Tensão normal na direcção x.</span></span>
+        <span class="value" id="v2_sx">0 MPa</span>
+      </div>
+      <input type="range" id="s2_sx" min="-150" max="150" value="50" oninput="updateTab2()">
+    </div>
+    <div class="slider-group slider-normal" style="flex:1;min-width:160px;">
+      <div class="slider-label">
+        <span class="name has-tooltip">σ<sub>y</sub><span class="tooltip">Tensão normal na direcção y.</span></span>
+        <span class="value" id="v2_sy">0 MPa</span>
+      </div>
+      <input type="range" id="s2_sy" min="-150" max="150" value="-20" oninput="updateTab2()">
+    </div>
+    <div class="slider-group slider-shear" style="flex:1;min-width:160px;">
+      <div class="slider-label">
+        <span class="name has-tooltip">τ<sub>xy</sub><span class="tooltip">Tensão de corte. Positiva: face x+ aponta em +y.</span></span>
+        <span class="value" id="v2_txy">0 MPa</span>
+      </div>
+      <input type="range" id="s2_txy" min="-150" max="150" value="30" oninput="updateTab2()">
+    </div>
+    <div class="slider-group" style="flex:1;min-width:200px;">
+      <div class="slider-label">
+        <span class="name" style="font-weight:600;">θ</span>
+        <span class="value" id="v2_theta">0°</span>
+      </div>
+      <input type="range" id="s2_theta" min="0" max="180" value="0" step="0.5" oninput="updateTab2()">
+    </div>
+    <button class="btn" id="btn_animate" onclick="toggleAnimate()">Animar</button>
+    <div class="checkbox-group" style="margin:0;">
+      <input type="checkbox" id="chk_3circles" onchange="updateTab2()">
+      <label for="chk_3circles" style="font-size:13px;">3 Círculos (τ<sub>max</sub> abs.)</label>
+    </div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;">
+      <button class="btn" onclick="setPreset2D('traction')">Tração pura</button>
+      <button class="btn" onclick="setPreset2D('shear')">Corte puro</button>
+      <button class="btn" onclick="setPreset2D('biaxial')">Biaxial</button>
+      <button class="btn" onclick="setPreset2D('test')">Problema teste</button>
+    </div>
+  </div>
+  <div class="main-area">
+    <div class="left-side">
+      <div class="canvas-wrap">
+        <canvas id="canvas2d-element"></canvas>
+      </div>
+      <div class="mohr-info" id="mohr-info-left">
+        <h4 style="color:var(--accent-blue);margin-bottom:6px;font-weight:600;">Tensões no Plano Rodado</h4>
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">Fórmulas de transformação: σ<sub>x'</sub> = (σ<sub>x</sub>+σ<sub>y</sub>)/2 + (σ<sub>x</sub>−σ<sub>y</sub>)/2·cos2θ + τ<sub>xy</sub>·sin2θ</div>
+        <div id="rotated-values" style="font-size:15px;"></div>
+      </div>
+    </div>
+    <div class="right-side">
+      <div class="canvas-wrap">
+        <canvas id="canvas2d-mohr"></canvas>
+      </div>
+      <div class="mohr-info" id="mohr-info-right">
+        <h4 style="color:var(--accent-blue);margin-bottom:6px;font-weight:600;">Propriedades do Círculo de Mohr</h4>
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">Centro C = (σ<sub>x</sub>+σ<sub>y</sub>)/2 &nbsp; Raio R = √[((σ<sub>x</sub>−σ<sub>y</sub>)/2)² + τ<sub>xy</sub>²]</div>
+        <div id="mohr-values" style="font-size:15px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     TAB 3 — CAUCHY
+     ============================================================ -->
+<div id="tab3" class="tab-content">
+  <div class="controls-panel">
+    <div class="panel">
+      <h3>Tensor de Tensão</h3>
+      <div class="slider-group slider-normal">
+        <div class="slider-label"><span class="name">σ<sub>xx</sub></span><span class="value" id="v3_sxx">0</span></div>
+        <input type="range" id="s3_sxx" min="-150" max="150" value="0" oninput="updateTab3()">
+      </div>
+      <div class="slider-group slider-normal">
+        <div class="slider-label"><span class="name">σ<sub>yy</sub></span><span class="value" id="v3_syy">0</span></div>
+        <input type="range" id="s3_syy" min="-150" max="150" value="0" oninput="updateTab3()">
+      </div>
+      <div class="slider-group slider-normal">
+        <div class="slider-label"><span class="name">σ<sub>zz</sub></span><span class="value" id="v3_szz">0</span></div>
+        <input type="range" id="s3_szz" min="-150" max="150" value="0" oninput="updateTab3()">
+      </div>
+      <div class="slider-group slider-shear">
+        <div class="slider-label"><span class="name">τ<sub>xy</sub></span><span class="value" id="v3_txy">0</span></div>
+        <input type="range" id="s3_txy" min="-150" max="150" value="0" oninput="updateTab3()">
+      </div>
+      <div class="slider-group slider-shear">
+        <div class="slider-label"><span class="name">τ<sub>xz</sub></span><span class="value" id="v3_txz">0</span></div>
+        <input type="range" id="s3_txz" min="-150" max="150" value="0" oninput="updateTab3()">
+      </div>
+      <div class="slider-group slider-shear">
+        <div class="slider-label"><span class="name">τ<sub>yz</sub></span><span class="value" id="v3_tyz">0</span></div>
+        <input type="range" id="s3_tyz" min="-150" max="150" value="0" oninput="updateTab3()">
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Normal ao Plano</h3>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">
+        Define a normal <b style="color:var(--text-primary);">n</b> por componentes ou ângulos esféricos.
+      </div>
+      <div class="input-group">
+        <label>n<sub>x</sub></label>
+        <input type="number" id="in_nx" value="1" step="0.1" onchange="normalFromComponents()">
+        <label>n<sub>y</sub></label>
+        <input type="number" id="in_ny" value="0" step="0.1" onchange="normalFromComponents()">
+        <label>n<sub>z</sub></label>
+        <input type="number" id="in_nz" value="0" step="0.1" onchange="normalFromComponents()">
+      </div>
+      <div style="margin:8px 0;font-size:13px;color:var(--text-secondary);">Equação do plano: <b style="color:var(--text-primary);">ax + by + cz = 1</b></div>
+      <div class="input-group">
+        <label>a</label>
+        <input type="number" id="in_pa" value="0" step="0.5" onchange="normalFromPlane()">
+        <label>b</label>
+        <input type="number" id="in_pb" value="0" step="0.5" onchange="normalFromPlane()">
+        <label>c</label>
+        <input type="number" id="in_pc" value="0" step="0.5" onchange="normalFromPlane()">
+      </div>
+      <div class="slider-group" style="margin-top:10px;">
+        <div class="slider-label"><span class="name">θ (polar)</span><span class="value" id="v3_theta">0°</span></div>
+        <input type="range" id="s3_theta" min="0" max="180" value="90" step="1" oninput="normalFromAngles()">
+      </div>
+      <div class="slider-group">
+        <div class="slider-label"><span class="name">φ (azimutal)</span><span class="value" id="v3_phi">0°</span></div>
+        <input type="range" id="s3_phi" min="0" max="360" value="0" step="1" oninput="normalFromAngles()">
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Presets</h3>
+      <div class="preset-grid">
+        <button class="btn" onclick="setPreset3('test1')">Problema 1</button>
+        <button class="btn" onclick="setPreset3('test2')">Problema 2</button>
+        <button class="btn" onclick="setPreset3('facex')">Face X</button>
+        <button class="btn" onclick="setPreset3('facey')">Face Y</button>
+        <button class="btn" onclick="setPreset3('oct')">Plano octaédrico</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="viz-area" id="container3d-cauchy"></div>
+
+  <div class="results-panel">
+    <div class="panel">
+      <div class="desc-box">
+        <b>Lei de Cauchy</b> — Dado o tensor de tensão [σ] e um plano de normal <b>n</b>, o vetor tensão nesse plano é:
+        <span class="formula"><b>t</b> = [σ] · <b>n</b></span>
+        Este vetor <b>t</b> decompõe-se numa componente <b>normal</b> ao plano (σ<sub>n</sub> = <b>t</b> · <b>n</b>)
+        e numa componente <b>tangencial</b> (τ<sub>n</sub> = √(|<b>t</b>|² − σ<sub>n</sub>²)),
+        que representa o corte nesse plano.
+      </div>
+      <h3>Resultados</h3>
+      <div id="cauchy-results"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+// ============================================================
+// UTILITY — LINEAR ALGEBRA
+// ============================================================
+
+/**
+ * Calcula os invariantes de um tensor de tensão simétrico 3x3
+ * [σ] = [[s11,s12,s13],[s12,s22,s23],[s13,s23,s33]]
+ *
+ * I1 = tr(σ) = σ11 + σ22 + σ33
+ * I2 = σ11·σ22 + σ22·σ33 + σ33·σ11 - σ12² - σ23² - σ13²
+ * I3 = det(σ)
+ */
+function tensorInvariants(s) {
+  var I1 = s[0][0] + s[1][1] + s[2][2];
+  var I2 = s[0][0]*s[1][1] + s[1][1]*s[2][2] + s[2][2]*s[0][0]
+         - s[0][1]*s[0][1] - s[1][2]*s[1][2] - s[0][2]*s[0][2];
+  var I3 = s[0][0]*(s[1][1]*s[2][2] - s[1][2]*s[1][2])
+         - s[0][1]*(s[0][1]*s[2][2] - s[1][2]*s[0][2])
+         + s[0][2]*(s[0][1]*s[1][2] - s[1][1]*s[0][2]);
+  return { I1: I1, I2: I2, I3: I3 };
+}
+
+/**
+ * Calcula os 3 valores próprios (tensões principais) de um tensor simétrico 3x3.
+ * Usa a solução analítica da equação cúbica:
+ *   λ³ - I₁λ² + I₂λ - I₃ = 0
+ *
+ * Substitui λ = t + I₁/3 para eliminar o termo quadrático:
+ *   t³ + pt + q = 0
+ * onde p = I₂ - I₁²/3, q = -2I₁³/27 + I₁I₂/3 - I₃
+ *
+ * Para matrizes simétricas reais, as 3 raízes são sempre reais.
+ * Usa a fórmula trigonométrica: t_k = 2√(-p/3) · cos(1/3 · arccos(3q/(2p) · √(-3/p)) - 2πk/3)
+ *
+ * Retorna [σ₁, σ₂, σ₃] ordenados σ₁ ≥ σ₂ ≥ σ₃
+ */
+function eigenvalues3x3(s) {
+  var inv = tensorInvariants(s);
+  var I1 = inv.I1, I2 = inv.I2, I3 = inv.I3;
+
+  // Coeficientes da equação reduzida t³ + pt + q = 0
+  var p = I2 - I1*I1/3;
+  var q = -2*I1*I1*I1/27 + I1*I2/3 - I3;
+
+  var eigenvals;
+
+  if (Math.abs(p) < 1e-10) {
+    // Caso especial: p ≈ 0 → estado hidrostático ou quase
+    var t0 = Math.cbrt(-q);
+    eigenvals = [t0 + I1/3, t0 + I1/3, t0 + I1/3];
+  } else {
+    // Discriminante para 3 raízes reais: 4p³ + 27q² ≤ 0
+    var disc = -4*p*p*p - 27*q*q;
+
+    if (disc < -1e-10) {
+      // Não deveria acontecer para tensores simétricos, mas por segurança
+      var D = q*q/4 + p*p*p/27;
+      var sqD = Math.sqrt(Math.max(0, D));
+      var u = Math.cbrt(-q/2 + sqD);
+      var v = Math.cbrt(-q/2 - sqD);
+      eigenvals = [u + v + I1/3, I1/3, I1/3];
+    } else {
+      // 3 raízes reais — fórmula trigonométrica
+      var m = 2 * Math.sqrt(-p/3);
+      var theta = Math.acos(Math.max(-1, Math.min(1, 3*q/(p*m)))) / 3;
+
+      eigenvals = [
+        m * Math.cos(theta) + I1/3,
+        m * Math.cos(theta - 2*Math.PI/3) + I1/3,
+        m * Math.cos(theta - 4*Math.PI/3) + I1/3
+      ];
+    }
+  }
+
+  // Ordena σ₁ ≥ σ₂ ≥ σ₃
+  eigenvals.sort(function(a, b) { return b - a; });
+  return eigenvals;
+}
+
+/**
+ * Calcula o vetor próprio para um dado valor próprio λ da matriz simétrica s.
+ * Resolve (s - λI)v = 0. O vetor nulo é obtido como o produto vetorial
+ * de duas linhas da matriz (s - λI), que é perpendicular a ambas.
+ * Retorna o vetor normalizado.
+ */
+function eigenvector3x3(s, lambda) {
+  var A = [
+    [s[0][0] - lambda, s[0][1], s[0][2]],
+    [s[1][0], s[1][1] - lambda, s[1][2]],
+    [s[2][0], s[2][1], s[2][2] - lambda]
+  ];
+
+  // O vetor próprio é perpendicular a todas as linhas de A.
+  // Tenta o produto vetorial de pares de linhas; usa o que tem maior norma.
+  var pairs = [[0,1],[0,2],[1,2]];
+  var bestV = [1,0,0], bestLen = 0;
+
+  for (var k = 0; k < pairs.length; k++) {
+    var i = pairs[k][0], j = pairs[k][1];
+    var v = crossProduct(
+      [A[i][0], A[i][1], A[i][2]],
+      [A[j][0], A[j][1], A[j][2]]
+    );
+    var len = Math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+    if (len > bestLen) { bestV = v; bestLen = len; }
+  }
+
+  if (bestLen < 1e-10) return [1, 0, 0];
+  return [bestV[0]/bestLen, bestV[1]/bestLen, bestV[2]/bestLen];
+}
+
+function crossProduct(a, b) {
+  return [
+    a[1]*b[2] - a[2]*b[1],
+    a[2]*b[0] - a[0]*b[2],
+    a[0]*b[1] - a[1]*b[0]
+  ];
+}
+
+/** Produto matriz-vetor: [σ]·n */
+function matVecMul(m, v) {
+  return [
+    m[0][0]*v[0] + m[0][1]*v[1] + m[0][2]*v[2],
+    m[1][0]*v[0] + m[1][1]*v[1] + m[1][2]*v[2],
+    m[2][0]*v[0] + m[2][1]*v[1] + m[2][2]*v[2]
+  ];
+}
+
+function dotProduct(a, b) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+function vecLength(v) { return Math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]); }
+function vecScale(v, s) { return [v[0]*s, v[1]*s, v[2]*s]; }
+function vecSub(a, b) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]]; }
+
+function fmt(n) { return n.toFixed(2); }
+
+function pad(n) {
+  var s = n.toFixed(2);
+  while (s.length < 7) s = ' ' + s;
+  return s;
+}
+
+// ============================================================
+// TAB MANAGEMENT
+// ============================================================
+
+var currentTab = 0;
+
+function switchTab(idx) {
+  currentTab = idx;
+  document.querySelectorAll('.tab-btn').forEach(function(btn, i) {
+    btn.classList.toggle('active', i === idx);
+  });
+  document.querySelectorAll('.tab-content').forEach(function(tc, i) {
+    tc.classList.toggle('active', i === idx);
+  });
+
+  requestAnimationFrame(function() {
+    if (idx === 0) { resizeTab1(); updateTab1(); }
+    else if (idx === 1) { resizeTab2(); updateTab2(); }
+    else if (idx === 2) { resizeTab3(); updateTab3(); }
+  });
+}
+
+// ============================================================
+// TAB 1 — 3D STRESS CUBE
+// ============================================================
+
+var scene1, camera1, renderer1;
+var cubeGroup1;
+var arrowObjects1 = [];
+var principalObjects1 = [];
+var octahedralObjects1 = [];
+var axisObjects1 = [];
+var isDragging1 = false;
+var prevMouse1 = { x: 0, y: 0 };
+var spherical1 = { theta: Math.PI/4, phi: Math.PI/4, radius: 5 };
+
+function initTab1() {
+  var container = document.getElementById('container3d');
+  scene1 = new THREE.Scene();
+  camera1 = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+  updateCamera1();
+
+  renderer1 = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer1.setPixelRatio(window.devicePixelRatio);
+  renderer1.setClearColor(0x1a1a2e, 1);
+  container.insertBefore(renderer1.domElement, container.firstChild);
+
+  // Lighting
+  scene1.add(new THREE.AmbientLight(0x606080, 0.8));
+  var dl1 = new THREE.DirectionalLight(0xffffff, 0.6); dl1.position.set(5, 5, 5); scene1.add(dl1);
+  var dl2 = new THREE.DirectionalLight(0xffffff, 0.3); dl2.position.set(-3, -2, -4); scene1.add(dl2);
+
+  // Cube
+  cubeGroup1 = new THREE.Group();
+  scene1.add(cubeGroup1);
+
+  var cubeGeo = new THREE.BoxGeometry(2, 2, 2);
+  var cubeMat = new THREE.MeshPhongMaterial({ color: 0x3498db, transparent: true, opacity: 0.12, side: THREE.DoubleSide, depthWrite: false });
+  cubeGroup1.add(new THREE.Mesh(cubeGeo, cubeMat));
+  cubeGroup1.add(new THREE.LineSegments(new THREE.EdgesGeometry(cubeGeo), new THREE.LineBasicMaterial({ color: 0x5588cc })));
+
+  createAxes1();
+
+  // Orbit controls (manual)
+  var cvs = renderer1.domElement;
+  cvs.addEventListener('mousedown', function(e) { isDragging1 = true; prevMouse1 = { x: e.clientX, y: e.clientY }; });
+  cvs.addEventListener('mousemove', function(e) {
+    if (!isDragging1) return;
+    spherical1.theta -= (e.clientX - prevMouse1.x) * 0.01;
+    spherical1.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical1.phi - (e.clientY - prevMouse1.y) * 0.01));
+    prevMouse1 = { x: e.clientX, y: e.clientY };
+    updateCamera1();
+  });
+  cvs.addEventListener('mouseup', function() { isDragging1 = false; });
+  cvs.addEventListener('mouseleave', function() { isDragging1 = false; });
+  cvs.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    spherical1.radius = Math.max(2, Math.min(15, spherical1.radius + e.deltaY * 0.01));
+    updateCamera1();
+  }, { passive: false });
+
+  // Touch
+  var ts1 = null;
+  cvs.addEventListener('touchstart', function(e) { if (e.touches.length===1) ts1={x:e.touches[0].clientX,y:e.touches[0].clientY}; });
+  cvs.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+    if (e.touches.length===1 && ts1) {
+      spherical1.theta -= (e.touches[0].clientX - ts1.x)*0.01;
+      spherical1.phi = Math.max(0.1, Math.min(Math.PI-0.1, spherical1.phi - (e.touches[0].clientY - ts1.y)*0.01));
+      ts1 = {x:e.touches[0].clientX, y:e.touches[0].clientY};
+      updateCamera1();
+    }
+  }, { passive: false });
+  cvs.addEventListener('touchend', function() { ts1 = null; });
+
+  resizeTab1();
+  updateTab1();
+}
+
+function updateCamera1() {
+  var r = spherical1.radius, t = spherical1.theta, p = spherical1.phi;
+  camera1.position.set(r*Math.sin(p)*Math.cos(t), r*Math.cos(p), r*Math.sin(p)*Math.sin(t));
+  camera1.lookAt(0, 0, 0);
+}
+
+function createAxes1() {
+  axisObjects1.forEach(function(o) { scene1.remove(o); });
+  axisObjects1 = [];
+  var axLen = 2.2, colors = [0xff4444, 0x44ff44, 0x4488ff];
+  var dirs = [new THREE.Vector3(1,0,0), new THREE.Vector3(0,1,0), new THREE.Vector3(0,0,1)];
+  dirs.forEach(function(dir, i) {
+    var geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), dir.clone().multiplyScalar(axLen)]);
+    var line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: colors[i] }));
+    scene1.add(line); axisObjects1.push(line);
+
+    var geo2 = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), dir.clone().multiplyScalar(-axLen*0.6)]);
+    var line2 = new THREE.Line(geo2, new THREE.LineBasicMaterial({ color: colors[i], transparent: true, opacity: 0.3 }));
+    scene1.add(line2); axisObjects1.push(line2);
+
+    var sph = new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8), new THREE.MeshBasicMaterial({color:colors[i]}));
+    sph.position.copy(dir.clone().multiplyScalar(axLen+0.15));
+    scene1.add(sph); axisObjects1.push(sph);
+  });
+}
+
+/** Cria uma seta 3D (cilindro + cone) de origin na direcção dir com magnitude length. */
+function createArrow(origin, dir, length, color, group) {
+  if (Math.abs(length) < 0.01) return null;
+  var scaledLen = 0.3 + Math.abs(length) * 0.012;
+  var actualDir = dir.clone();
+  if (length < 0) actualDir.negate();
+
+  var shaftLen = scaledLen * 0.75;
+  var shaft = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.03, 0.03, shaftLen, 8),
+    new THREE.MeshPhongMaterial({ color: color })
+  );
+  var head = new THREE.Mesh(
+    new THREE.ConeGeometry(0.08, scaledLen*0.25, 8),
+    new THREE.MeshPhongMaterial({ color: color })
+  );
+  head.position.y = shaftLen/2 + scaledLen*0.125;
+
+  var arrowGroup = new THREE.Group();
+  arrowGroup.add(shaft); arrowGroup.add(head);
+
+  var quat = new THREE.Quaternion();
+  quat.setFromUnitVectors(new THREE.Vector3(0,1,0), actualDir.clone().normalize());
+  arrowGroup.quaternion.copy(quat);
+  arrowGroup.position.copy(origin.clone().add(actualDir.clone().normalize().multiplyScalar(shaftLen/2)));
+
+  group.add(arrowGroup);
+  return arrowGroup;
+}
+
+function clearArrows1() { arrowObjects1.forEach(function(o) { cubeGroup1.remove(o); }); arrowObjects1 = []; }
+function clearPrincipal1() { principalObjects1.forEach(function(o) { scene1.remove(o); }); principalObjects1 = []; }
+function clearOctahedral1() { octahedralObjects1.forEach(function(o) { scene1.remove(o); }); octahedralObjects1 = []; }
+
+function getStressTensor1() {
+  return [
+    [+document.getElementById('s_sxx').value, +document.getElementById('s_txy').value, +document.getElementById('s_txz').value],
+    [+document.getElementById('s_txy').value, +document.getElementById('s_syy').value, +document.getElementById('s_tyz').value],
+    [+document.getElementById('s_txz').value, +document.getElementById('s_tyz').value, +document.getElementById('s_szz').value]
+  ];
+}
+
+/** Generates an HTML table for a 3x3 tensor matrix with colored cells. */
+function matrixHTML(m, id) {
+  var colorCell = function(val, isNormal) {
+    var cls = isNormal ? 'normal' : 'shear';
+    var style = '';
+    if (isNormal) {
+      style = val >= 0 ? 'color:var(--accent-red);' : 'color:var(--accent-blue);';
+    }
+    return '<td class="' + cls + '" style="' + style + '">' + fmt(val) + '</td>';
+  };
+  var h = '<table class="matrix-table"' + (id ? ' id="'+id+'"' : '') + '>';
+  for (var r = 0; r < 3; r++) {
+    h += '<tr>';
+    if (r === 0) h += '<td class="bracket-left" rowspan="3">&#x23A1;<br>&#x23A2;<br>&#x23A3;</td>';
+    h += colorCell(m[r][0], r===0);
+    h += colorCell(m[r][1], r===1 && false); // off-diagonal → shear coloring
+    h += colorCell(m[r][2], r===2 && false);
+    // Actually color: diagonal = normal, off-diagonal = shear
+    if (r === 0) h += '<td class="bracket-right" rowspan="3">&#x23A4;<br>&#x23A5;<br>&#x23A6;</td>';
+    h += '</tr>';
+  }
+  h += '</table>';
+  return h;
+}
+
+function matrixHTML2(m) {
+  var h = '<table class="matrix-table">';
+  for (var r = 0; r < 3; r++) {
+    h += '<tr>';
+    if (r === 0) h += '<td class="bracket-left" rowspan="3">&#x23A1;<br>&#x23A2;<br>&#x23A3;</td>';
+    for (var c = 0; c < 3; c++) {
+      var isDiag = (r === c);
+      var style = '';
+      if (isDiag) {
+        style = m[r][c] >= 0 ? 'color:var(--accent-red);font-weight:600;' : 'color:var(--accent-blue);font-weight:600;';
+      } else {
+        style = 'color:var(--accent-green);';
+      }
+      h += '<td style="' + style + '">' + fmt(m[r][c]) + '</td>';
+    }
+    if (r === 0) h += '<td class="bracket-right" rowspan="3">&#x23A4;<br>&#x23A5;<br>&#x23A6;</td>';
+    h += '</tr>';
+  }
+  h += '</table>';
+  return h;
+}
+
+/** Generates an HTML bar graph for a principal stress value. */
+function stressBarHTML(label, value, maxAbs, color) {
+  var pct = maxAbs > 0.01 ? Math.abs(value) / maxAbs * 50 : 0;
+  var isPositive = value >= 0;
+  var barColor = color || (isPositive ? 'var(--accent-red)' : 'var(--accent-blue)');
+  var left = isPositive ? '50%' : (50 - pct) + '%';
+  return '<div class="stress-bar-container">' +
+    '<span class="stress-bar-label" style="color:' + barColor + ';">' + label + '</span>' +
+    '<div class="stress-bar-track">' +
+      '<div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--border-light);"></div>' +
+      '<div class="stress-bar-fill" style="left:' + left + ';width:' + pct + '%;background:' + barColor + ';opacity:0.7;"></div>' +
+    '</div>' +
+    '<span class="stress-bar-value" style="color:' + barColor + ';">' + fmt(value) + ' MPa</span>' +
+  '</div>';
+}
+
+function updateTab1() {
+  var s = getStressTensor1();
+  var sxx = s[0][0], syy = s[1][1], szz = s[2][2];
+  var txy = s[0][1], txz = s[0][2], tyz = s[1][2];
+
+  // Update slider value labels
+  document.getElementById('v_sxx').textContent = fmt(sxx) + ' MPa';
+  document.getElementById('v_syy').textContent = fmt(syy) + ' MPa';
+  document.getElementById('v_szz').textContent = fmt(szz) + ' MPa';
+  document.getElementById('v_txy').textContent = fmt(txy) + ' MPa';
+  document.getElementById('v_txz').textContent = fmt(txz) + ' MPa';
+  document.getElementById('v_tyz').textContent = fmt(tyz) + ' MPa';
+
+  // Tensor overlay — visual matrix table
+  document.getElementById('tensor-display').innerHTML =
+    '<div class="title">[σ] (MPa)</div>' + matrixHTML2(s);
+
+  // Draw stress arrows on cube faces
+  clearArrows1();
+  var faceConfigs = [
+    { origin: [1,0,0], dir: [1,0,0], val: sxx, color: sxx>=0 ? 0xe74c3c : 0x3498db },
+    { origin: [-1,0,0], dir: [-1,0,0], val: sxx, color: sxx>=0 ? 0xe74c3c : 0x3498db },
+    { origin: [0,1,0], dir: [0,1,0], val: syy, color: syy>=0 ? 0xe74c3c : 0x3498db },
+    { origin: [0,-1,0], dir: [0,-1,0], val: syy, color: syy>=0 ? 0xe74c3c : 0x3498db },
+    { origin: [0,0,1], dir: [0,0,1], val: szz, color: szz>=0 ? 0xe74c3c : 0x3498db },
+    { origin: [0,0,-1], dir: [0,0,-1], val: szz, color: szz>=0 ? 0xe74c3c : 0x3498db },
+    { origin: [1,0,0], dir: [0,1,0], val: txy, color: 0x2ecc71 },
+    { origin: [-1,0,0], dir: [0,-1,0], val: txy, color: 0x2ecc71 },
+    { origin: [0,1,0], dir: [1,0,0], val: txy, color: 0x2ecc71 },
+    { origin: [0,-1,0], dir: [-1,0,0], val: txy, color: 0x2ecc71 },
+    { origin: [1,0,0], dir: [0,0,1], val: txz, color: 0x2ecc71 },
+    { origin: [-1,0,0], dir: [0,0,-1], val: txz, color: 0x2ecc71 },
+    { origin: [0,0,1], dir: [1,0,0], val: txz, color: 0x2ecc71 },
+    { origin: [0,0,-1], dir: [-1,0,0], val: txz, color: 0x2ecc71 },
+    { origin: [0,1,0], dir: [0,0,1], val: tyz, color: 0x2ecc71 },
+    { origin: [0,-1,0], dir: [0,0,-1], val: tyz, color: 0x2ecc71 },
+    { origin: [0,0,1], dir: [0,1,0], val: tyz, color: 0x2ecc71 },
+    { origin: [0,0,-1], dir: [0,-1,0], val: tyz, color: 0x2ecc71 }
+  ];
+  faceConfigs.forEach(function(cfg) {
+    var arr = createArrow(
+      new THREE.Vector3(cfg.origin[0], cfg.origin[1], cfg.origin[2]),
+      new THREE.Vector3(cfg.dir[0], cfg.dir[1], cfg.dir[2]),
+      cfg.val, cfg.color, cubeGroup1
+    );
+    if (arr) arrowObjects1.push(arr);
+  });
+
+  // Compute eigenvalues
+  var evals = eigenvalues3x3(s);
+  var inv = tensorInvariants(s);
+  var maxAbsEig = Math.max(Math.abs(evals[0]), Math.abs(evals[1]), Math.abs(evals[2]), 1);
+
+  // Principal stresses — with bar chart
+  clearPrincipal1();
+  var showP = document.getElementById('chk_principal').checked;
+
+  var pH = '';
+  pH += stressBarHTML('σ₁', evals[0], maxAbsEig);
+  pH += stressBarHTML('σ₂', evals[1], maxAbsEig);
+  pH += stressBarHTML('σ₃', evals[2], maxAbsEig);
+
+  if (showP) {
+    for (var i = 0; i < 3; i++) {
+      var evec = eigenvector3x3(s, evals[i]);
+      var dir3 = new THREE.Vector3(evec[0], evec[1], evec[2]);
+      var pts = [dir3.clone().multiplyScalar(-2.5), dir3.clone().multiplyScalar(2.5)];
+      var geo = new THREE.BufferGeometry().setFromPoints(pts);
+      var line = new THREE.Line(geo, new THREE.LineDashedMaterial({ color: 0xf1c40f, dashSize: 0.15, gapSize: 0.1 }));
+      line.computeLineDistances();
+      scene1.add(line);
+      principalObjects1.push(line);
+    }
+    pH += '<div style="margin-top:6px;font-size:12px;color:var(--accent-yellow);">Eixos principais visíveis (tracejado amarelo)</div>';
+  }
+  document.getElementById('principal-values').innerHTML = pH;
+
+  // Octahedral planes visualization
+  clearOctahedral1();
+  var showOct = document.getElementById('chk_octahedral').checked;
+  if (showOct) {
+    // Compute eigenvectors (principal directions)
+    var evecs = [];
+    for (var i = 0; i < 3; i++) {
+      evecs.push(eigenvector3x3(s, evals[i]));
+    }
+    // Ensure right-handed system: e3 = e1 x e2
+    var e3cross = crossProduct(evecs[0], evecs[1]);
+    if (dotProduct(e3cross, evecs[2]) < 0) {
+      evecs[2] = [-evecs[2][0], -evecs[2][1], -evecs[2][2]];
+    }
+
+    // Octahedron vertices are at ±e1, ±e2, ±e3 (scaled to cube)
+    var octScale = 1.0;
+    var verts = [];
+    for (var i = 0; i < 3; i++) {
+      verts.push(new THREE.Vector3(evecs[i][0]*octScale, evecs[i][1]*octScale, evecs[i][2]*octScale));
+      verts.push(new THREE.Vector3(-evecs[i][0]*octScale, -evecs[i][1]*octScale, -evecs[i][2]*octScale));
+    }
+    // verts: [+e1, -e1, +e2, -e2, +e3, -e3] = indices [0,1,2,3,4,5]
+
+    // 8 triangular faces of octahedron: each picks one from each axis pair
+    var faces = [
+      [0,2,4], [0,2,5], [0,3,4], [0,3,5],
+      [1,2,4], [1,2,5], [1,3,4], [1,3,5]
+    ];
+
+    var octMat = new THREE.MeshBasicMaterial({
+      color: 0x9b59b6, transparent: true, opacity: 0.12,
+      side: THREE.DoubleSide, depthWrite: false
+    });
+    var octEdgeMat = new THREE.LineBasicMaterial({
+      color: 0x9b59b6, transparent: true, opacity: 0.5
+    });
+
+    faces.forEach(function(f) {
+      var geo = new THREE.BufferGeometry();
+      var positions = new Float32Array([
+        verts[f[0]].x, verts[f[0]].y, verts[f[0]].z,
+        verts[f[1]].x, verts[f[1]].y, verts[f[1]].z,
+        verts[f[2]].x, verts[f[2]].y, verts[f[2]].z
+      ]);
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geo.computeVertexNormals();
+      var mesh = new THREE.Mesh(geo, octMat);
+      scene1.add(mesh);
+      octahedralObjects1.push(mesh);
+
+      // Edges of each triangle
+      var edgeGeo = new THREE.BufferGeometry().setFromPoints([verts[f[0]], verts[f[1]], verts[f[2]], verts[f[0]]]);
+      var edgeLine = new THREE.Line(edgeGeo, octEdgeMat);
+      scene1.add(edgeLine);
+      octahedralObjects1.push(edgeLine);
+    });
+
+    // Highlight one octahedral face normal: n = (e1+e2+e3)/√3
+    var octN = [
+      (evecs[0][0]+evecs[1][0]+evecs[2][0])/Math.sqrt(3),
+      (evecs[0][1]+evecs[1][1]+evecs[2][1])/Math.sqrt(3),
+      (evecs[0][2]+evecs[1][2]+evecs[2][2])/Math.sqrt(3)
+    ];
+    var octNDir = new THREE.Vector3(octN[0], octN[1], octN[2]).normalize();
+    var octNGrp = new THREE.Group();
+    scene1.add(octNGrp);
+    octahedralObjects1.push(octNGrp);
+    createArrow(new THREE.Vector3(0,0,0), octNDir, 60, 0x9b59b6, octNGrp);
+  }
+
+  // Invariants and criteria
+  var sm = inv.I1 / 3;
+  var sd = [
+    [s[0][0]-sm, s[0][1], s[0][2]],
+    [s[1][0], s[1][1]-sm, s[1][2]],
+    [s[2][0], s[2][1], s[2][2]-sm]
+  ];
+  var J2 = 0.5*(sd[0][0]*sd[0][0]+sd[1][1]*sd[1][1]+sd[2][2]*sd[2][2])
+         + sd[0][1]*sd[0][1] + sd[0][2]*sd[0][2] + sd[1][2]*sd[1][2];
+  var vonMises = Math.sqrt(3*J2);
+  var tresca = (evals[0] - evals[2]) / 2;
+  var sigOct = inv.I1 / 3;
+  var tauOct = Math.sqrt(2*J2/3);
+
+  // Von Mises bar
+  var maxCrit = Math.max(vonMises, tresca, 1);
+
+  var iH = '';
+  iH += '<div class="info-row"><span class="label">I₁</span><span class="val">' + fmt(inv.I1) + '</span></div>';
+  iH += '<div class="info-row"><span class="label">I₂</span><span class="val">' + fmt(inv.I2) + '</span></div>';
+  iH += '<div class="info-row"><span class="label">I₃</span><span class="val">' + fmt(inv.I3) + '</span></div>';
+  iH += '<hr class="section-sep">';
+  iH += '<div class="info-row"><span class="label">σ<sub>m</sub> (hidrostática)</span><span class="val">' + fmt(sm) + ' MPa</span></div>';
+  iH += '<div class="info-row"><span class="label">J₂</span><span class="val">' + fmt(J2) + '</span></div>';
+  iH += '<hr class="section-sep">';
+  iH += stressBarHTML('σ<sub>eq</sub>', vonMises, maxCrit * 1.2, 'var(--accent-orange)');
+  iH += '<div style="font-size:12px;color:var(--text-dim);margin:-2px 0 4px 36px;">von Mises = √(3J₂)</div>';
+  iH += stressBarHTML('τ<sub>max</sub>', tresca, maxCrit * 1.2, 'var(--accent-green)');
+  iH += '<div style="font-size:12px;color:var(--text-dim);margin:-2px 0 4px 36px;">Tresca = (σ₁ − σ₃) / 2</div>';
+  iH += '<hr class="section-sep">';
+  var octHighlight = showOct ? 'color:#9b59b6;font-weight:600;' : '';
+  iH += '<div class="info-row"><span class="label" style="' + octHighlight + '">σ<sub>oct</sub></span><span class="val" style="' + octHighlight + '">' + fmt(sigOct) + ' MPa</span></div>';
+  iH += '<div class="info-row"><span class="label" style="' + octHighlight + '">τ<sub>oct</sub></span><span class="val" style="' + octHighlight + '">' + fmt(tauOct) + ' MPa</span></div>';
+  if (showOct) {
+    iH += '<div style="font-size:12px;color:#9b59b6;margin-top:4px;">σ<sub>oct</sub> = I₁/3 = σ<sub>m</sub> &nbsp; τ<sub>oct</sub> = √(2J₂/3)</div>';
+    iH += '<div style="font-size:11px;color:var(--text-dim);margin-top:2px;">Normal ao plano: n = (±1/√3, ±1/√3, ±1/√3) nos eixos principais</div>';
+  }
+  document.getElementById('invariant-values').innerHTML = iH;
+
+  // Deviatoric tensor
+  var dH = matrixHTML2(sd);
+  dH += '<div class="info-row" style="margin-top:6px;"><span class="label">tr(S)</span><span class="val">' + fmt(sd[0][0]+sd[1][1]+sd[2][2]) + '</span></div>';
+  document.getElementById('deviatoric-values').innerHTML = dH;
+}
+
+function setPreset3D(name) {
+  var v = { sxx:0, syy:0, szz:0, txy:0, txz:0, tyz:0 };
+  switch (name) {
+    case 'uniaxial': v.sxx=100; break;
+    case 'biaxial': v.sxx=-50; v.syy=-50; break;
+    case 'shear': v.txy=50; break;
+    case 'hydro': v.sxx=80; v.syy=80; v.szz=80; break;
+    case 'general': v.sxx=60; v.syy=-30; v.szz=20; v.txy=40; v.txz=-15; v.tyz=25; break;
+    case 'test1': v.sxx=125; v.syy=-25; v.szz=30; v.txy=50; break;
+    case 'test2': v.syy=100; v.szz=50; v.tyz=-25; break;
+  }
+  document.getElementById('s_sxx').value = v.sxx;
+  document.getElementById('s_syy').value = v.syy;
+  document.getElementById('s_szz').value = v.szz;
+  document.getElementById('s_txy').value = v.txy;
+  document.getElementById('s_txz').value = v.txz;
+  document.getElementById('s_tyz').value = v.tyz;
+  updateTab1();
+}
+
+function resizeTab1() {
+  var c = document.getElementById('container3d');
+  var r = c.getBoundingClientRect();
+  if (r.width > 0 && r.height > 0 && renderer1) {
+    renderer1.setSize(r.width, r.height);
+    camera1.aspect = r.width / r.height;
+    camera1.updateProjectionMatrix();
+  }
+}
+
+// ============================================================
+// TAB 2 — MOHR CIRCLE & 2D ELEMENT
+// ============================================================
+
+var animating2D = false;
+
+function updateTab2() {
+  var sx = +document.getElementById('s2_sx').value;
+  var sy = +document.getElementById('s2_sy').value;
+  var txy = +document.getElementById('s2_txy').value;
+  var theta = +document.getElementById('s2_theta').value;
+
+  document.getElementById('v2_sx').textContent = fmt(sx) + ' MPa';
+  document.getElementById('v2_sy').textContent = fmt(sy) + ' MPa';
+  document.getElementById('v2_txy').textContent = fmt(txy) + ' MPa';
+  document.getElementById('v2_theta').textContent = fmt(theta) + '°';
+
+  // Fórmulas de transformação de tensões
+  var rad = theta * Math.PI / 180;
+  var sxp = (sx+sy)/2 + (sx-sy)/2 * Math.cos(2*rad) + txy * Math.sin(2*rad);
+  var syp = (sx+sy)/2 - (sx-sy)/2 * Math.cos(2*rad) - txy * Math.sin(2*rad);
+  var txyp = -(sx-sy)/2 * Math.sin(2*rad) + txy * Math.cos(2*rad);
+
+  var C = (sx+sy)/2;
+  var R = Math.sqrt(Math.pow((sx-sy)/2, 2) + txy*txy);
+  var s1 = C+R, s2 = C-R;
+  var theta_p = 0.5 * Math.atan2(2*txy, sx-sy) * 180/Math.PI;
+
+  // Rotated values display
+  document.getElementById('rotated-values').innerHTML =
+    '<span style="color:var(--accent-red);font-weight:500;">σ<sub>x\'</sub> = ' + fmt(sxp) + ' MPa</span> &nbsp;&nbsp; ' +
+    '<span style="color:var(--accent-red);font-weight:500;">σ<sub>y\'</sub> = ' + fmt(syp) + ' MPa</span> &nbsp;&nbsp; ' +
+    '<span style="color:var(--accent-green);font-weight:500;">τ<sub>x\'y\'</sub> = ' + fmt(txyp) + ' MPa</span>';
+
+  // Mohr info
+  document.getElementById('mohr-values').innerHTML =
+    'C = ' + fmt(C) + ' &nbsp; R = ' + fmt(R) + '<br>' +
+    '<span style="color:var(--accent-yellow);font-weight:500;">σ₁ = ' + fmt(s1) + ' &nbsp; σ₂ = ' + fmt(s2) + '</span><br>' +
+    'τ<sub>max</sub> = ' + fmt(R) + ' &nbsp;&nbsp; θ<sub>p</sub> = ' + fmt(theta_p) + '°';
+
+  drawElement2D(sx, sy, txy, theta, sxp, syp, txyp);
+  drawMohr2D(sx, sy, txy, theta, C, R, s1, s2);
+}
+
+function drawElement2D(sx, sy, txy, theta, sxp, syp, txyp) {
+  var canvas = document.getElementById('canvas2d-element');
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  // Scale factor for HiDPI (already applied in resize)
+  var dpr = window.devicePixelRatio || 1;
+  var cx = w/2, cy = h/2;
+  var size = Math.min(w, h) * 0.2;
+  var rad = theta * Math.PI / 180;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Reference axes
+  ctx.strokeStyle = 'rgba(100,100,150,0.3)';
+  ctx.lineWidth = 1 * dpr;
+  ctx.beginPath();
+  ctx.moveTo(-w/2+20*dpr, 0); ctx.lineTo(w/2-20*dpr, 0);
+  ctx.moveTo(0, -h/2+20*dpr); ctx.lineTo(0, h/2-20*dpr);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(160,160,200,0.6)';
+  ctx.font = (14*dpr) + 'px sans-serif';
+  ctx.fillText('x', w/2 - 35*dpr, -8*dpr);
+  ctx.fillText('y', 8*dpr, -h/2 + 35*dpr);
+
+  // Rotate element
+  ctx.rotate(-rad);
+
+  // Square element
+  ctx.strokeStyle = '#5588cc';
+  ctx.lineWidth = 2.5 * dpr;
+  ctx.strokeRect(-size, -size, 2*size, 2*size);
+  ctx.fillStyle = 'rgba(52,152,219,0.08)';
+  ctx.fillRect(-size, -size, 2*size, 2*size);
+
+  // Rotated axes labels
+  if (theta > 0.5) {
+    ctx.fillStyle = 'rgba(200,200,220,0.7)';
+    ctx.font = (13*dpr) + 'px sans-serif';
+    ctx.fillText("x'", size + 15*dpr, 5*dpr);
+    ctx.fillText("y'", -5*dpr, -(size + 12*dpr));
+  }
+
+  // Stress arrows
+  var arrowLen = 50 * dpr;
+  var maxS = Math.max(Math.abs(sxp), Math.abs(syp), Math.abs(txyp), 1);
+
+  // σx'
+  if (Math.abs(sxp) > 0.5) {
+    var len = arrowLen * Math.abs(sxp)/maxS;
+    var col = sxp > 0 ? '#e74c3c' : '#3498db';
+    var d = sxp > 0 ? 1 : -1;
+    drawArrow2D(ctx, size, 0, size + d*len, 0, col, dpr);
+    drawArrow2D(ctx, -size, 0, -size - d*len, 0, col, dpr);
+    // Label at arrow tip
+    ctx.fillStyle = col;
+    ctx.font = 'bold ' + (13*dpr) + 'px sans-serif';
+    ctx.fillText('σ', size + d*len + 4*dpr*d, -6*dpr);
+  }
+
+  // σy'
+  if (Math.abs(syp) > 0.5) {
+    var len = arrowLen * Math.abs(syp)/maxS;
+    var col = syp > 0 ? '#e74c3c' : '#3498db';
+    var d = syp > 0 ? -1 : 1;
+    drawArrow2D(ctx, 0, -size, 0, -size + d*len, col, dpr);
+    drawArrow2D(ctx, 0, size, 0, size - d*len, col, dpr);
+  }
+
+  // τx'y'
+  if (Math.abs(txyp) > 0.5) {
+    var len = arrowLen * Math.abs(txyp)/maxS;
+    var col = '#2ecc71';
+    var d = txyp > 0 ? -1 : 1;
+    drawArrow2D(ctx, size, 0, size, d*len, col, dpr);
+    drawArrow2D(ctx, -size, 0, -size, -d*len, col, dpr);
+    drawArrow2D(ctx, 0, -size, -d*len, -size, col, dpr);
+    drawArrow2D(ctx, 0, size, d*len, size, col, dpr);
+  }
+
+  ctx.restore();
+
+  // Info overlay in bottom-left
+  ctx.fillStyle = 'rgba(22,33,62,0.85)';
+  var boxW = 220*dpr, boxH = 80*dpr, boxM = 10*dpr;
+  ctx.fillRect(boxM, h - boxH - boxM, boxW, boxH);
+  ctx.strokeStyle = 'var(--border)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(boxM, h - boxH - boxM, boxW, boxH);
+
+  var textX = boxM + 10*dpr;
+  var textY = h - boxH - boxM + 22*dpr;
+  ctx.font = (14*dpr) + 'px Courier New';
+  ctx.fillStyle = '#e74c3c';
+  ctx.fillText("σx' = " + fmt(sxp) + " MPa", textX, textY);
+  ctx.fillStyle = '#e74c3c';
+  ctx.fillText("σy' = " + fmt(syp) + " MPa", textX, textY + 20*dpr);
+  ctx.fillStyle = '#2ecc71';
+  ctx.fillText("τx'y' = " + fmt(txyp) + " MPa", textX, textY + 40*dpr);
+
+  // Theta display top-right
+  ctx.fillStyle = 'rgba(22,33,62,0.85)';
+  ctx.fillRect(w - 110*dpr, 8*dpr, 100*dpr, 30*dpr);
+  ctx.fillStyle = '#f1c40f';
+  ctx.font = 'bold ' + (15*dpr) + 'px Courier New';
+  ctx.fillText('θ = ' + fmt(theta) + '°', w - 105*dpr, 30*dpr);
+}
+
+function drawArrow2D(ctx, x1, y1, x2, y2, color, dpr) {
+  var headLen = 10 * (dpr || 1);
+  var angle = Math.atan2(y2-y1, x2-x1);
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 2.5 * (dpr || 1);
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - headLen*Math.cos(angle - Math.PI/6), y2 - headLen*Math.sin(angle - Math.PI/6));
+  ctx.lineTo(x2 - headLen*Math.cos(angle + Math.PI/6), y2 - headLen*Math.sin(angle + Math.PI/6));
+  ctx.closePath(); ctx.fill();
+}
+
+function drawMohr2D(sx, sy, txy, theta, C, R, s1, s2) {
+  var canvas = document.getElementById('canvas2d-mohr');
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  var dpr = window.devicePixelRatio || 1;
+  var maxVal = Math.max(Math.abs(s1), Math.abs(s2), Math.abs(R), 50) * 1.3;
+  var scale = Math.min(w, h) * 0.38 / maxVal;
+  var cx = w/2, cy = h/2;
+
+  function toCanvas(sigma, tau) {
+    return { x: cx + sigma*scale, y: cy + tau*scale };
+  }
+
+  // Grid
+  ctx.strokeStyle = 'rgba(100,100,150,0.15)';
+  ctx.lineWidth = 1 * dpr;
+  var gridStep = Math.pow(10, Math.floor(Math.log10(maxVal)));
+  if (maxVal/gridStep < 3) gridStep /= 2;
+
+  for (var g = -Math.ceil(maxVal/gridStep)*gridStep; g <= maxVal*1.3; g += gridStep) {
+    var p = toCanvas(g, 0);
+    ctx.beginPath(); ctx.moveTo(p.x, 0); ctx.lineTo(p.x, h); ctx.stroke();
+    var p2 = toCanvas(0, g);
+    ctx.beginPath(); ctx.moveTo(0, p2.y); ctx.lineTo(w, p2.y); ctx.stroke();
+  }
+
+  // Axes
+  ctx.strokeStyle = 'rgba(200,200,220,0.5)';
+  ctx.lineWidth = 1.5 * dpr;
+  ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(w, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, h); ctx.stroke();
+
+  // Axis labels
+  ctx.fillStyle = '#bbb';
+  ctx.font = 'bold ' + (15*dpr) + 'px sans-serif';
+  ctx.fillText('σ', w - 25*dpr, cy - 10*dpr);
+  ctx.fillText('τ', cx + 10*dpr, 20*dpr);
+  ctx.fillStyle = '#666';
+  ctx.font = (11*dpr) + 'px sans-serif';
+  ctx.fillText('(+↓ conv. Mohr)', cx + 10*dpr, 36*dpr);
+
+  // Grid labels
+  ctx.fillStyle = '#555';
+  ctx.font = (10*dpr) + 'px Courier New';
+  for (var g = -Math.ceil(maxVal/gridStep)*gridStep; g <= maxVal*1.3; g += gridStep) {
+    if (Math.abs(g) < 0.1) continue;
+    var p = toCanvas(g, 0);
+    if (p.x > 25*dpr && p.x < w-25*dpr) ctx.fillText(g.toFixed(0), p.x-8*dpr, cy+16*dpr);
+    var p2 = toCanvas(0, g);
+    if (p2.y > 25*dpr && p2.y < h-25*dpr) ctx.fillText(g.toFixed(0), cx+5*dpr, p2.y+4*dpr);
+  }
+
+  // 3 circles (plane stress)
+  if (document.getElementById('chk_3circles').checked) {
+    var principals = [s1, s2, 0].sort(function(a,b){return b-a;});
+    var p1=principals[0], p2=principals[1], p3=principals[2];
+
+    ctx.lineWidth = 2 * dpr;
+    [[p1,p3,'rgba(241,196,15,0.4)'],[p1,p2,'rgba(241,196,15,0.25)'],[p2,p3,'rgba(241,196,15,0.25)']].forEach(function(pair) {
+      var c = toCanvas((pair[0]+pair[1])/2, 0);
+      var r = Math.abs(pair[0]-pair[1])/2 * scale;
+      ctx.strokeStyle = pair[2];
+      ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, 2*Math.PI); ctx.stroke();
+    });
+
+    var tauMaxAbs = (p1-p3)/2;
+    var tmPt = toCanvas((p1+p3)/2, tauMaxAbs);
+    ctx.fillStyle = '#f1c40f';
+    ctx.font = (12*dpr) + 'px Courier New';
+    ctx.fillText('τmax,abs = ' + fmt(tauMaxAbs), tmPt.x + 8*dpr, tmPt.y - 6*dpr);
+
+    principals.forEach(function(p, i) {
+      var pt = toCanvas(p, 0);
+      ctx.fillStyle = '#f1c40f';
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, 5*dpr, 0, 2*Math.PI); ctx.fill();
+      ctx.fillText('σ'+(i+1), pt.x-5*dpr, pt.y+20*dpr);
+    });
+  }
+
+  // Main Mohr circle
+  var center = toCanvas(C, 0);
+  var radius = R * scale;
+
+  ctx.strokeStyle = '#3498db';
+  ctx.lineWidth = 2.5 * dpr;
+  ctx.beginPath(); ctx.arc(center.x, center.y, radius, 0, 2*Math.PI); ctx.stroke();
+  ctx.fillStyle = 'rgba(52,152,219,0.06)';
+  ctx.beginPath(); ctx.arc(center.x, center.y, radius, 0, 2*Math.PI); ctx.fill();
+
+  // Center
+  ctx.fillStyle = '#3498db';
+  ctx.beginPath(); ctx.arc(center.x, center.y, 4*dpr, 0, 2*Math.PI); ctx.fill();
+  ctx.fillStyle = '#88aadd';
+  ctx.font = (12*dpr) + 'px Courier New';
+  ctx.fillText('C(' + fmt(C) + ', 0)', center.x + 8*dpr, center.y + 18*dpr);
+
+  // Points X and Y
+  var ptX = toCanvas(sx, txy);
+  var ptY = toCanvas(sy, -txy);
+
+  // Diameter
+  ctx.strokeStyle = 'rgba(200,200,220,0.3)';
+  ctx.lineWidth = 1 * dpr;
+  ctx.setLineDash([5*dpr, 5*dpr]);
+  ctx.beginPath(); ctx.moveTo(ptX.x, ptX.y); ctx.lineTo(ptY.x, ptY.y); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Point X
+  ctx.fillStyle = '#e74c3c';
+  ctx.beginPath(); ctx.arc(ptX.x, ptX.y, 6*dpr, 0, 2*Math.PI); ctx.fill();
+  ctx.font = (12*dpr) + 'px sans-serif';
+  ctx.fillText('X(' + fmt(sx) + ', ' + fmt(txy) + ')', ptX.x + 10*dpr, ptX.y - 10*dpr);
+
+  // Point Y
+  ctx.fillStyle = '#2ecc71';
+  ctx.beginPath(); ctx.arc(ptY.x, ptY.y, 6*dpr, 0, 2*Math.PI); ctx.fill();
+  ctx.fillText('Y(' + fmt(sy) + ', ' + fmt(-txy) + ')', ptY.x + 10*dpr, ptY.y + 18*dpr);
+
+  // σ1, σ2 on axis
+  var ptS1 = toCanvas(s1, 0), ptS2 = toCanvas(s2, 0);
+  ctx.fillStyle = '#f1c40f';
+  ctx.beginPath(); ctx.arc(ptS1.x, ptS1.y, 5*dpr, 0, 2*Math.PI); ctx.fill();
+  ctx.beginPath(); ctx.arc(ptS2.x, ptS2.y, 5*dpr, 0, 2*Math.PI); ctx.fill();
+  ctx.font = (13*dpr) + 'px Courier New';
+  ctx.fillText('σ₁=' + fmt(s1), ptS1.x - 12*dpr, ptS1.y + 22*dpr);
+  ctx.fillText('σ₂=' + fmt(s2), ptS2.x - 12*dpr, ptS2.y + 22*dpr);
+
+  // τmax at top of circle
+  var ptTm = toCanvas(C, R);
+  ctx.fillStyle = '#2ecc71';
+  ctx.font = (12*dpr) + 'px Courier New';
+  ctx.fillText('τmax=' + fmt(R), ptTm.x + 10*dpr, ptTm.y + 5*dpr);
+
+  // Current rotated point P — only shown when θ > 1° (otherwise it coincides with X)
+  if (theta > 1) {
+    var rad2 = theta * Math.PI / 180;
+    var alpha0 = Math.atan2(txy, sx - C);
+    var alpha = alpha0 + 2*rad2;
+    var sxp2 = C + R*Math.cos(alpha);
+    var txyp_m = R*Math.sin(alpha);
+    var ptCur = toCanvas(sxp2, txyp_m);
+
+    // Radius line from center to P
+    ctx.strokeStyle = '#e67e22';
+    ctx.lineWidth = 2 * dpr;
+    ctx.beginPath(); ctx.moveTo(center.x, center.y); ctx.lineTo(ptCur.x, ptCur.y); ctx.stroke();
+
+    // Arc showing the 2θ rotation from X
+    ctx.strokeStyle = 'rgba(230,126,34,0.4)';
+    ctx.lineWidth = 1.5 * dpr;
+    var arcR = Math.min(radius * 0.35, 40*dpr);
+    ctx.beginPath(); ctx.arc(center.x, center.y, arcR, alpha0, alpha, false); ctx.stroke();
+    // Label the arc "2θ"
+    var midA = (alpha0 + alpha) / 2;
+    var arcLabelR = arcR + 12*dpr;
+    ctx.fillStyle = 'rgba(230,126,34,0.7)';
+    ctx.font = (11*dpr) + 'px sans-serif';
+    ctx.fillText('2θ', center.x + arcLabelR*Math.cos(midA) - 6*dpr, center.y + arcLabelR*Math.sin(midA) + 4*dpr);
+
+    // Point P dot
+    ctx.fillStyle = '#e67e22';
+    ctx.beginPath(); ctx.arc(ptCur.x, ptCur.y, 7*dpr, 0, 2*Math.PI); ctx.fill();
+
+    // Label with stress values, positioned to avoid X/Y overlap
+    ctx.font = 'bold ' + (12*dpr) + 'px Courier New';
+    // Place label on the side opposite to center to avoid overlap
+    var labelDx = (ptCur.x > center.x) ? 10*dpr : -140*dpr;
+    var labelDy = (ptCur.y > center.y) ? 18*dpr : -10*dpr;
+    // If very close to X point, push label further
+    var distToX = Math.sqrt(Math.pow(ptCur.x-ptX.x,2) + Math.pow(ptCur.y-ptX.y,2));
+    if (distToX < 30*dpr) labelDy += 25*dpr;
+    // If very close to Y point, push label
+    var distToY = Math.sqrt(Math.pow(ptCur.x-ptY.x,2) + Math.pow(ptCur.y-ptY.y,2));
+    if (distToY < 30*dpr) labelDy -= 25*dpr;
+
+    ctx.fillText('P(' + fmt(sxp2) + ', ' + fmt(txyp_m) + ')', ptCur.x + labelDx, ptCur.y + labelDy);
+  }
+}
+
+function setPreset2D(name) {
+  var sx=0, sy=0, txy=0;
+  switch (name) {
+    case 'traction': sx=80; break;
+    case 'shear': txy=50; break;
+    case 'biaxial': sx=60; sy=-40; break;
+    case 'test': sx=100; sy=-25; txy=50; break;
+  }
+  document.getElementById('s2_sx').value = sx;
+  document.getElementById('s2_sy').value = sy;
+  document.getElementById('s2_txy').value = txy;
+  document.getElementById('s2_theta').value = 0;
+  updateTab2();
+}
+
+function toggleAnimate() {
+  animating2D = !animating2D;
+  document.getElementById('btn_animate').classList.toggle('active', animating2D);
+  document.getElementById('btn_animate').textContent = animating2D ? 'Parar' : 'Animar';
+  if (animating2D) animateTheta();
+}
+
+function animateTheta() {
+  if (!animating2D) return;
+  var sl = document.getElementById('s2_theta');
+  sl.value = (+sl.value + 0.3) % 180;
+  updateTab2();
+  requestAnimationFrame(animateTheta);
+}
+
+function resizeTab2() {
+  ['canvas2d-element', 'canvas2d-mohr'].forEach(function(id) {
+    var c = document.getElementById(id);
+    var r = c.parentElement.getBoundingClientRect();
+    var dpr = window.devicePixelRatio || 1;
+    c.width = r.width * dpr;
+    c.height = r.height * dpr;
+    c.style.width = r.width + 'px';
+    c.style.height = r.height + 'px';
+  });
+}
+
+// ============================================================
+// TAB 3 — CAUCHY'S LAW
+// ============================================================
+
+var scene3, camera3, renderer3;
+var cubeGroup3;
+var cauchyObjects3 = [];
+var isDragging3 = false, prevMouse3 = { x:0, y:0 };
+var spherical3 = { theta: Math.PI/4, phi: Math.PI/4, radius: 6 };
+var currentNormal = [1, 0, 0];
+
+function initTab3() {
+  var container = document.getElementById('container3d-cauchy');
+  scene3 = new THREE.Scene();
+  camera3 = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+  updateCamera3();
+
+  renderer3 = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer3.setPixelRatio(window.devicePixelRatio);
+  renderer3.setClearColor(0x1a1a2e, 1);
+  container.appendChild(renderer3.domElement);
+
+  scene3.add(new THREE.AmbientLight(0x606080, 0.8));
+  var dl1 = new THREE.DirectionalLight(0xffffff, 0.6); dl1.position.set(5,5,5); scene3.add(dl1);
+  var dl2 = new THREE.DirectionalLight(0xffffff, 0.3); dl2.position.set(-3,-2,-4); scene3.add(dl2);
+
+  cubeGroup3 = new THREE.Group();
+  scene3.add(cubeGroup3);
+  var cubeGeo = new THREE.BoxGeometry(2,2,2);
+  cubeGroup3.add(new THREE.Mesh(cubeGeo, new THREE.MeshPhongMaterial({ color:0x3498db, transparent:true, opacity:0.1, side:THREE.DoubleSide, depthWrite:false })));
+  cubeGroup3.add(new THREE.LineSegments(new THREE.EdgesGeometry(cubeGeo), new THREE.LineBasicMaterial({ color:0x5588cc })));
+
+  // Axes
+  var axLen=2.2, axC=[0xff4444,0x44ff44,0x4488ff], axD=[[1,0,0],[0,1,0],[0,0,1]];
+  axD.forEach(function(d,i) {
+    scene3.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(d[0]*axLen,d[1]*axLen,d[2]*axLen)]), new THREE.LineBasicMaterial({color:axC[i]})));
+    scene3.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(-d[0]*axLen*0.6,-d[1]*axLen*0.6,-d[2]*axLen*0.6)]), new THREE.LineBasicMaterial({color:axC[i],transparent:true,opacity:0.3})));
+    var sph = new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8), new THREE.MeshBasicMaterial({color:axC[i]}));
+    sph.position.set(d[0]*(axLen+0.15), d[1]*(axLen+0.15), d[2]*(axLen+0.15));
+    scene3.add(sph);
+  });
+
+  // Orbit
+  var cvs = renderer3.domElement;
+  cvs.addEventListener('mousedown', function(e) { isDragging3=true; prevMouse3={x:e.clientX,y:e.clientY}; });
+  cvs.addEventListener('mousemove', function(e) {
+    if (!isDragging3) return;
+    spherical3.theta -= (e.clientX-prevMouse3.x)*0.01;
+    spherical3.phi = Math.max(0.1, Math.min(Math.PI-0.1, spherical3.phi - (e.clientY-prevMouse3.y)*0.01));
+    prevMouse3 = {x:e.clientX, y:e.clientY};
+    updateCamera3();
+  });
+  cvs.addEventListener('mouseup', function(){isDragging3=false;});
+  cvs.addEventListener('mouseleave', function(){isDragging3=false;});
+  cvs.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    spherical3.radius = Math.max(2, Math.min(15, spherical3.radius + e.deltaY*0.01));
+    updateCamera3();
+  }, {passive:false});
+
+  var ts3=null;
+  cvs.addEventListener('touchstart', function(e){if(e.touches.length===1) ts3={x:e.touches[0].clientX,y:e.touches[0].clientY};});
+  cvs.addEventListener('touchmove', function(e){
+    e.preventDefault();
+    if(e.touches.length===1&&ts3){
+      spherical3.theta-=(e.touches[0].clientX-ts3.x)*0.01;
+      spherical3.phi=Math.max(0.1,Math.min(Math.PI-0.1,spherical3.phi-(e.touches[0].clientY-ts3.y)*0.01));
+      ts3={x:e.touches[0].clientX,y:e.touches[0].clientY};
+      updateCamera3();
+    }
+  },{passive:false});
+  cvs.addEventListener('touchend', function(){ts3=null;});
+
+  resizeTab3();
+}
+
+function updateCamera3() {
+  var r=spherical3.radius, t=spherical3.theta, p=spherical3.phi;
+  camera3.position.set(r*Math.sin(p)*Math.cos(t), r*Math.cos(p), r*Math.sin(p)*Math.sin(t));
+  camera3.lookAt(0,0,0);
+}
+
+function getStressTensor3() {
+  return [
+    [+document.getElementById('s3_sxx').value, +document.getElementById('s3_txy').value, +document.getElementById('s3_txz').value],
+    [+document.getElementById('s3_txy').value, +document.getElementById('s3_syy').value, +document.getElementById('s3_tyz').value],
+    [+document.getElementById('s3_txz').value, +document.getElementById('s3_tyz').value, +document.getElementById('s3_szz').value]
+  ];
+}
+
+function normalFromComponents() {
+  var nx=+document.getElementById('in_nx').value, ny=+document.getElementById('in_ny').value, nz=+document.getElementById('in_nz').value;
+  var len = Math.sqrt(nx*nx+ny*ny+nz*nz);
+  if (len < 1e-10) return;
+  currentNormal = [nx/len, ny/len, nz/len];
+  var th = Math.acos(Math.max(-1,Math.min(1,currentNormal[1]))) * 180/Math.PI;
+  var ph = Math.atan2(currentNormal[2], currentNormal[0]) * 180/Math.PI;
+  if (ph<0) ph+=360;
+  document.getElementById('s3_theta').value = th;
+  document.getElementById('s3_phi').value = ph;
+  updateTab3();
+}
+
+function normalFromPlane() {
+  var a=+document.getElementById('in_pa').value, b=+document.getElementById('in_pb').value, c=+document.getElementById('in_pc').value;
+  var len = Math.sqrt(a*a+b*b+c*c);
+  if (len < 1e-10) return;
+  currentNormal = [a/len, b/len, c/len];
+  document.getElementById('in_nx').value = currentNormal[0].toFixed(4);
+  document.getElementById('in_ny').value = currentNormal[1].toFixed(4);
+  document.getElementById('in_nz').value = currentNormal[2].toFixed(4);
+  var th = Math.acos(Math.max(-1,Math.min(1,currentNormal[1]))) * 180/Math.PI;
+  var ph = Math.atan2(currentNormal[2], currentNormal[0]) * 180/Math.PI;
+  if (ph<0) ph+=360;
+  document.getElementById('s3_theta').value = th;
+  document.getElementById('s3_phi').value = ph;
+  updateTab3();
+}
+
+function normalFromAngles() {
+  var th = +document.getElementById('s3_theta').value * Math.PI/180;
+  var ph = +document.getElementById('s3_phi').value * Math.PI/180;
+  currentNormal = [Math.sin(th)*Math.cos(ph), Math.cos(th), Math.sin(th)*Math.sin(ph)];
+  document.getElementById('in_nx').value = currentNormal[0].toFixed(4);
+  document.getElementById('in_ny').value = currentNormal[1].toFixed(4);
+  document.getElementById('in_nz').value = currentNormal[2].toFixed(4);
+  updateTab3();
+}
+
+function updateTab3() {
+  var s = getStressTensor3();
+  var n = currentNormal;
+
+  document.getElementById('v3_sxx').textContent = fmt(s[0][0]);
+  document.getElementById('v3_syy').textContent = fmt(s[1][1]);
+  document.getElementById('v3_szz').textContent = fmt(s[2][2]);
+  document.getElementById('v3_txy').textContent = fmt(s[0][1]);
+  document.getElementById('v3_txz').textContent = fmt(s[0][2]);
+  document.getElementById('v3_tyz').textContent = fmt(s[1][2]);
+  document.getElementById('v3_theta').textContent = document.getElementById('s3_theta').value + '°';
+  document.getElementById('v3_phi').textContent = document.getElementById('s3_phi').value + '°';
+
+  // Lei de Cauchy: t = [σ]·n
+  var t = matVecMul(s, n);
+  var sigN = dotProduct(t, n);
+  var tMag = vecLength(t);
+  var tauN = Math.sqrt(Math.max(0, tMag*tMag - sigN*sigN));
+  var normalVec = vecScale(n, sigN);
+  var shearVec = vecSub(t, normalVec);
+
+  // Clear old 3D objects
+  cauchyObjects3.forEach(function(o) { scene3.remove(o); });
+  cauchyObjects3 = [];
+
+  // Cutting plane
+  var targetN = new THREE.Vector3(n[0], n[1], n[2]);
+  var quat = new THREE.Quaternion();
+  quat.setFromUnitVectors(new THREE.Vector3(0,0,1), targetN);
+
+  var planeMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(3,3),
+    new THREE.MeshBasicMaterial({ color:0x3498db, transparent:true, opacity:0.15, side:THREE.DoubleSide, depthWrite:false })
+  );
+  planeMesh.quaternion.copy(quat);
+  scene3.add(planeMesh); cauchyObjects3.push(planeMesh);
+
+  var ring = new THREE.Mesh(
+    new THREE.RingGeometry(0,1.5,32),
+    new THREE.MeshBasicMaterial({ color:0x3498db, transparent:true, opacity:0.08, side:THREE.DoubleSide, depthWrite:false })
+  );
+  ring.quaternion.copy(quat);
+  scene3.add(ring); cauchyObjects3.push(ring);
+
+  var circPts = [];
+  for (var i=0; i<=64; i++) { var a=(i/64)*2*Math.PI; circPts.push(new THREE.Vector3(1.5*Math.cos(a),1.5*Math.sin(a),0)); }
+  var circLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(circPts), new THREE.LineBasicMaterial({color:0x3498db,transparent:true,opacity:0.5}));
+  circLine.quaternion.copy(quat);
+  scene3.add(circLine); cauchyObjects3.push(circLine);
+
+  // Normal vector n (white)
+  var nGrp = new THREE.Group(); scene3.add(nGrp); cauchyObjects3.push(nGrp);
+  createArrow(new THREE.Vector3(0,0,0), targetN, 80, 0xffffff, nGrp);
+
+  // Traction vector t (orange)
+  if (tMag > 0.5) {
+    var tGrp = new THREE.Group(); scene3.add(tGrp); cauchyObjects3.push(tGrp);
+    createArrow(new THREE.Vector3(0,0,0), new THREE.Vector3(t[0],t[1],t[2]).normalize(), tMag, 0xe67e22, tGrp);
+  }
+
+  // Normal stress σn (red/blue)
+  if (Math.abs(sigN) > 0.5) {
+    var nsGrp = new THREE.Group(); scene3.add(nsGrp); cauchyObjects3.push(nsGrp);
+    createArrow(new THREE.Vector3(0,0,0), targetN.clone(), sigN, sigN>=0?0xe74c3c:0x3498db, nsGrp);
+  }
+
+  // Shear stress τn (green)
+  if (tauN > 0.5) {
+    var sLen = vecLength(shearVec);
+    if (sLen > 0.01) {
+      var tsGrp = new THREE.Group(); scene3.add(tsGrp); cauchyObjects3.push(tsGrp);
+      createArrow(new THREE.Vector3(0,0,0), new THREE.Vector3(shearVec[0]/sLen,shearVec[1]/sLen,shearVec[2]/sLen), tauN, 0x2ecc71, tsGrp);
+    }
+  }
+
+  // Results panel — structured with calc steps
+  var html = '';
+
+  // Normal vector display
+  html += '<div style="margin-bottom:10px;">';
+  html += '<div style="color:var(--accent-blue);font-size:15px;font-weight:600;margin-bottom:4px;">';
+  html += '<b>n</b> = (' + fmt(n[0]) + ', ' + fmt(n[1]) + ', ' + fmt(n[2]) + ')</div>';
+  html += '</div>';
+
+  // Step 1: t = [σ]·n
+  html += '<div class="calc-step">';
+  html += '<div class="step-label">Passo 1 — Vetor tensão</div>';
+  html += '<div class="step-content" style="font-size:13px;">';
+  html += '         [σ]           ·   n      =    t\n';
+  html += '┌' + pad(s[0][0]) + ' ' + pad(s[0][1]) + ' ' + pad(s[0][2]) + '┐  ┌' + pad(n[0]) + '┐   ┌' + pad(t[0]) + '┐\n';
+  html += '│' + pad(s[1][0]) + ' ' + pad(s[1][1]) + ' ' + pad(s[1][2]) + '│ ·│' + pad(n[1]) + '│ = │' + pad(t[1]) + '│\n';
+  html += '└' + pad(s[2][0]) + ' ' + pad(s[2][1]) + ' ' + pad(s[2][2]) + '┘  └' + pad(n[2]) + '┘   └' + pad(t[2]) + '┘</div>';
+  html += '</div>';
+
+  // Step 2: Results
+  html += '<div class="calc-step" style="border-left-color:var(--accent-orange);">';
+  html += '<div class="step-label">Passo 2 — Decomposição</div>';
+  html += '<div class="info-row"><span class="label" style="color:var(--accent-orange);">|<b>t</b>|</span><span class="val">' + fmt(tMag) + ' MPa</span></div>';
+  html += '<div class="info-row"><span class="label" style="color:' + (sigN>=0?'var(--accent-red)':'var(--accent-blue)') + ';">σ<sub>n</sub> = <b>t</b> · <b>n</b></span><span class="val">' + fmt(sigN) + ' MPa</span></div>';
+  html += '<div class="info-row"><span class="label" style="color:var(--accent-green);">τ<sub>n</sub> = √(|<b>t</b>|² − σ<sub>n</sub>²)</span><span class="val">' + fmt(tauN) + ' MPa</span></div>';
+  html += '</div>';
+
+  // Legend
+  html += '<div class="color-legend" style="margin-top:10px;">';
+  html += '<div class="color-legend-item"><div class="color-swatch" style="background:#fff;"></div> <b>n</b></div>';
+  html += '<div class="color-legend-item"><div class="color-swatch" style="background:#e67e22;"></div> <b>t</b></div>';
+  html += '<div class="color-legend-item"><div class="color-swatch" style="background:#e74c3c;"></div> σ<sub>n</sub></div>';
+  html += '<div class="color-legend-item"><div class="color-swatch" style="background:#2ecc71;"></div> τ<sub>n</sub></div>';
+  html += '</div>';
+
+  document.getElementById('cauchy-results').innerHTML = html;
+}
+
+function setPreset3(name) {
+  var sxx=0,syy=0,szz=0,txy=0,txz=0,tyz=0, nx=1,ny=0,nz=0;
+  switch (name) {
+    case 'test1':
+      sxx=125; syy=-25; szz=30; txy=50;
+      var sq83=Math.sqrt(83); nx=3/sq83; ny=7/sq83; nz=5/sq83;
+      break;
+    case 'test2':
+      syy=100; szz=50; tyz=-25;
+      nx=0; ny=1; nz=0;
+      break;
+    case 'facex':
+      sxx=80; syy=-30; szz=20; txy=40;
+      nx=1; ny=0; nz=0;
+      break;
+    case 'facey':
+      sxx=80; syy=-30; szz=20; txy=40;
+      nx=0; ny=1; nz=0;
+      break;
+    case 'oct':
+      sxx=60; syy=-30; szz=20; txy=40;
+      var sq3=1/Math.sqrt(3); nx=sq3; ny=sq3; nz=sq3;
+      break;
+  }
+  document.getElementById('s3_sxx').value=sxx;
+  document.getElementById('s3_syy').value=syy;
+  document.getElementById('s3_szz').value=szz;
+  document.getElementById('s3_txy').value=txy;
+  document.getElementById('s3_txz').value=txz;
+  document.getElementById('s3_tyz').value=tyz;
+  currentNormal=[nx,ny,nz];
+  document.getElementById('in_nx').value=nx.toFixed(4);
+  document.getElementById('in_ny').value=ny.toFixed(4);
+  document.getElementById('in_nz').value=nz.toFixed(4);
+  var th=Math.acos(Math.max(-1,Math.min(1,ny)))*180/Math.PI;
+  var ph=Math.atan2(nz,nx)*180/Math.PI; if(ph<0) ph+=360;
+  document.getElementById('s3_theta').value=Math.round(th);
+  document.getElementById('s3_phi').value=Math.round(ph);
+  updateTab3();
+}
+
+function resizeTab3() {
+  var c = document.getElementById('container3d-cauchy');
+  var r = c.getBoundingClientRect();
+  if (r.width>0 && r.height>0 && renderer3) {
+    renderer3.setSize(r.width, r.height);
+    camera3.aspect = r.width/r.height;
+    camera3.updateProjectionMatrix();
+  }
+}
+
+// ============================================================
+// RENDER LOOP & INIT
+// ============================================================
+
+function animate() {
+  requestAnimationFrame(animate);
+  if (currentTab===0 && renderer1) renderer1.render(scene1, camera1);
+  if (currentTab===2 && renderer3) renderer3.render(scene3, camera3);
+}
+
+window.addEventListener('load', function() {
+  initTab1();
+  initTab3();
+  resizeTab1(); resizeTab2(); resizeTab3();
+  setPreset3D('uniaxial');
+  updateTab2();
+  setPreset3('facex');
+  animate();
+});
+
+window.addEventListener('resize', function() {
+  resizeTab1(); resizeTab2(); resizeTab3();
+  if (currentTab===0) updateTab1();
+  else if (currentTab===1) updateTab2();
+  else if (currentTab===2) updateTab3();
+});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagramas NVM — Esforços Internos em Vigas</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root{
+  --bg-primary:#1a1a2e; --bg-secondary:#16213e; --bg-panel:#0f3460; --bg-input:#1a1a3e;
+  --bg-card:#1e2a4a; --text-primary:#e8e8f0; --text-secondary:#a0a0c0; --text-dim:#6a6a8a;
+  --accent-blue:#4aa3ff; --accent-green:#2ecc71; --accent-red:#e74c3c; --accent-yellow:#f1c40f;
+  --accent-orange:#e67e22; --load:#ff7b72; --dist:#ffd166;
+  --border:#2a2a4e; --border-light:#3a3a5e;
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-size:14px;
+  background:var(--bg-primary); color:var(--text-primary); height:100vh; width:100vw;
+  display:flex; overflow:hidden;
+}
+#sidebar{ width:368px; min-width:368px; height:100vh; overflow-y:auto;
+  background:var(--bg-secondary); border-right:2px solid var(--border); padding:16px 16px 48px; }
+#sidebar h1{ font-size:17px; font-weight:700; margin-bottom:2px; letter-spacing:.2px;}
+#sidebar .sub{ font-size:12px; color:var(--text-dim); margin-bottom:16px;}
+.panel{ background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:14px;}
+.panel h3{ font-size:11px; font-weight:700; color:var(--accent-blue); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:12px;}
+.slider-group{ margin-bottom:13px;}
+.slider-group.hidden{ display:none;}
+.slider-label{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px;}
+.slider-label span:first-child{ color:var(--text-secondary);}
+.slider-label .val{ color:var(--text-primary); font-weight:600; font-variant-numeric:tabular-nums; background:var(--bg-input); padding:1px 7px; border-radius:5px; border:1px solid var(--border-light);}
+input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:5px; border-radius:5px; background:var(--border); outline:none;}
+input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--accent-blue); cursor:pointer; border:2px solid #fff2; box-shadow:0 1px 4px #0006;}
+input[type=range]::-moz-range-thumb{ width:16px; height:16px; border-radius:50%; background:var(--accent-blue); cursor:pointer; border:2px solid #fff2;}
+input[type=range].cut::-webkit-slider-thumb{ background:var(--accent-yellow);}
+input[type=range].cut::-moz-range-thumb{ background:var(--accent-yellow);}
+input[type=range].aux::-webkit-slider-thumb{ background:var(--accent-orange);}
+input[type=range].aux::-moz-range-thumb{ background:var(--accent-orange);}
+select{ width:100%; background:var(--bg-input); color:var(--text-primary); border:1px solid var(--border-light); border-radius:7px; padding:9px 10px; font-size:13px; font-family:inherit; cursor:pointer;}
+.desc{ font-size:11.5px; color:var(--text-dim); margin-top:9px; line-height:1.45;}
+.tag{ display:inline-block; font-size:10px; font-weight:700; padding:1px 6px; border-radius:4px; margin-top:8px;}
+.tag.iso{ background:#173a2a; color:#58e08a; border:1px solid #2ecc7155;}
+.tag.hyp{ background:#3a2417; color:#ffb37a; border:1px solid #e67e2255;}
+.presets button{ display:block; width:100%; text-align:left; background:var(--bg-input); color:var(--text-secondary); border:1px solid var(--border-light); border-radius:7px; padding:7px 10px; font-size:12px; cursor:pointer; font-family:inherit; margin-bottom:6px; transition:.15s;}
+.presets button:hover{ color:var(--text-primary); border-color:var(--accent-green); background:#1c2f24;}
+.toggle-row{ display:flex; align-items:center; gap:9px; margin-bottom:9px; cursor:pointer; user-select:none;}
+.toggle-row input{ width:16px; height:16px; accent-color:var(--accent-blue); cursor:pointer;}
+.toggle-row label{ color:var(--text-secondary); cursor:pointer;}
+.explain{ font-size:12.5px; line-height:1.55; color:var(--text-secondary);}
+.explain b{ color:var(--text-primary);}
+.explain .formula{ background:var(--bg-input); border:1px solid var(--border-light); border-radius:6px; padding:6px 8px; margin:6px 0; font-family:ui-monospace,monospace; font-size:12px; color:var(--text-primary);}
+.explain ul{ margin:6px 0 6px 16px;} .explain li{ margin-bottom:5px;}
+.dot{ display:inline-block; width:9px; height:9px; border-radius:50%; vertical-align:middle; margin-right:4px;}
+.k{ font-weight:700;} .nN{color:var(--accent-blue);} .nV{color:var(--accent-green);} .nM{color:var(--accent-red);}
+#main{ flex:1; position:relative; background:var(--bg-primary); min-width:0;}
+#cv{ display:block; width:100%; height:100%;}
+#readout{ position:absolute; top:14px; right:14px; background:#0d1830ee; border:1px solid var(--border-light);
+  border-radius:10px; padding:12px 14px; min-width:190px; backdrop-filter:blur(4px); box-shadow:0 6px 22px #0007;}
+#readout h4{ font-size:10.5px; text-transform:uppercase; letter-spacing:1px; color:var(--accent-yellow); margin-bottom:8px;}
+#readout .row{ display:flex; justify-content:space-between; font-variant-numeric:tabular-nums; margin-bottom:4px; font-size:13px;}
+#readout .row span:first-child{ color:var(--text-secondary);}
+#readout .row span:last-child{ font-weight:700;}
+#reactBox{ position:absolute; left:14px; bottom:14px; background:#0d1830dd; border:1px solid var(--border-light); border-radius:10px; padding:10px 13px; font-size:12.5px; font-variant-numeric:tabular-nums; max-width:260px;}
+#reactBox .ttl{ font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--text-dim); margin-bottom:6px;}
+#reactBox .row{ display:flex; gap:14px; justify-content:space-between; margin-bottom:3px;}
+#reactBox .row span:first-child{ color:var(--text-secondary);}
+#reactBox .row span:last-child{ font-weight:700; color:var(--accent-yellow);}
+#hint{ position:absolute; bottom:14px; left:50%; transform:translateX(-50%); font-size:12px; color:var(--text-dim); background:#0d183099; padding:5px 12px; border-radius:20px; border:1px solid var(--border);}
+</style>
+</head>
+<body>
+<div id="sidebar">
+  <h1>Diagramas N · V · M</h1>
+  <div class="sub">Esforços internos em vigas — apoios, balanços e rótulas</div>
+
+  <div class="panel">
+    <h3>Tipo de viga / apoios</h3>
+    <select id="config"></select>
+    <div class="desc" id="cfgDesc"></div>
+    <div id="cfgTag"></div>
+  </div>
+
+  <div class="panel">
+    <h3>Geometria e cargas</h3>
+    <div class="slider-group">
+      <div class="slider-label"><span>Comprimento <b>L</b></span><span class="val" id="Lval">6.0 m</span></div>
+      <input type="range" id="L" min="3" max="12" step="0.1" value="6">
+    </div>
+    <div class="slider-group" id="sGroup">
+      <div class="slider-label"><span id="sName">Apoio interior</span><span class="val" id="sval">3.0 m</span></div>
+      <input type="range" id="s" class="aux" min="1" max="5" step="0.05" value="3">
+    </div>
+    <div class="slider-group">
+      <div class="slider-label"><span>Carga distribuída <b>w</b></span><span class="val" id="wval">10 kN/m</span></div>
+      <input type="range" id="w" min="0" max="30" step="0.5" value="10">
+    </div>
+    <div class="slider-group">
+      <div class="slider-label"><span>Carga pontual <b>P</b></span><span class="val" id="Pval">20 kN</span></div>
+      <input type="range" id="P" min="0" max="60" step="1" value="20">
+    </div>
+    <div class="slider-group">
+      <div class="slider-label"><span>Posição de P <b>a</b></span><span class="val" id="aval">3.0 m</span></div>
+      <input type="range" id="a" min="0" max="6" step="0.1" value="3">
+    </div>
+    <div class="slider-group">
+      <div class="slider-label"><span>Inclinação de P <b>α</b></span><span class="val" id="alphaval">0°</span></div>
+      <input type="range" id="alpha" min="0" max="80" step="1" value="0">
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Secção de corte</h3>
+    <div class="slider-group">
+      <div class="slider-label"><span>Posição do corte <b>x</b></span><span class="val" id="xcutval">3.0 m</span></div>
+      <input type="range" id="xcut" class="cut" min="0" max="6" step="0.05" value="3">
+    </div>
+    <div class="desc">Arrasta a linha amarela no desenho (ou este cursor) para cortar a viga e ler N, V, M na secção.</div>
+  </div>
+
+  <div class="panel">
+    <h3>Opções</h3>
+    <div class="toggle-row"><input type="checkbox" id="showReact" checked><label for="showReact">Mostrar reações de apoio</label></div>
+    <div class="toggle-row"><input type="checkbox" id="showComp" checked><label for="showComp">Mostrar componentes de P</label></div>
+    <div class="toggle-row"><input type="checkbox" id="momentDown"><label for="momentDown">M positivo para baixo (lado tracionado)</label></div>
+  </div>
+
+  <div class="panel presets">
+    <h3>Exemplos</h3>
+    <button data-preset="meio">Apoiada · carga a meio vão</button>
+    <button data-preset="incl">Apoiada · carga inclinada (gera N)</button>
+    <button data-preset="cont">Contínua 2 vãos · distribuída ⭐</button>
+    <button data-preset="gerber">Gerber (rótula) · distribuída ⭐</button>
+    <button data-preset="overhang">Balanços · momento negativo nos apoios</button>
+    <button data-preset="propped">Consola escorada · distribuída</button>
+    <button data-preset="ffhinge">Bi-encastrada com rótula ⭐</button>
+  </div>
+
+  <div class="panel">
+    <h3>Como ler estes diagramas</h3>
+    <div class="explain">
+      <ul>
+        <li><span class="dot" style="background:var(--accent-blue)"></span><span class="k nN">N</span> esforço normal (axial) [kN]</li>
+        <li><span class="dot" style="background:var(--accent-green)"></span><span class="k nV">V</span> esforço transverso (corte) [kN]</li>
+        <li><span class="dot" style="background:var(--accent-red)"></span><span class="k nM">M</span> momento fletor [kN·m]</li>
+      </ul>
+      <p><b>Método das secções:</b> corta-se em <b>x</b>, isola-se um troço e impõe-se o equilíbrio. N, V, M são o que equilibra esse lado — é o que mostra a linha amarela.</p>
+      <div class="formula">dV/dx = −w &nbsp;&nbsp; dM/dx = V</div>
+      <ul>
+        <li>Sem distribuída → V constante, M linear; com w uniforme → V linear, M parabólico.</li>
+        <li>Carga pontual: V dá um <b>salto</b>; M faz um bico. Onde <b>V = 0</b>, M é extremo.</li>
+        <li><b style="color:var(--accent-orange)">Rótula (○):</b> liberta o momento → <b>M = 0</b> nesse ponto, mas V e N passam. Pode tornar isostática uma viga hiperstática (viga Gerber).</li>
+        <li><b>Apoio interior / contínua:</b> aparece um <b>momento negativo</b> (tração em cima) sobre o apoio — caso típico das vigas contínuas (hiperstáticas).</li>
+        <li><b>Balanços:</b> a carga no balanço gera momento negativo sobre o apoio e pode dar <b>reação para baixo</b> (uplift) no outro.</li>
+      </ul>
+      <p><b>Hiperstática?</b> com mais apoios do que as 3 equações de equilíbrio (contínua, bi-encastrada, consola escorada) as reações resolvem-se por <b>compatibilidade/rigidez</b> — é o que este simulador faz por trás (método dos elementos finitos de viga).</p>
+      <p><b>Para que serve:</b> dimensionar. σ = N/A + M·y/I ; τ ~ V·Q/(I·b). Procuram-se as secções críticas (|M|máx, |V|máx).</p>
+    </div>
+  </div>
+</div>
+
+<div id="main">
+  <canvas id="cv"></canvas>
+  <div id="hint">Arrasta na figura para mover a secção ✂ — ○ marca rótulas (M=0)</div>
+  <div id="readout">
+    <h4>Secção em x = <span id="roX">3.00</span> m</h4>
+    <div class="row"><span class="nN">N</span><span class="nN" id="roN">0.00 kN</span></div>
+    <div class="row"><span class="nV">V</span><span class="nV" id="roV">0.00 kN</span></div>
+    <div class="row"><span class="nM">M</span><span class="nM" id="roM">0.00 kN·m</span></div>
+    <hr style="border:none;border-top:1px solid var(--border);margin:8px 0">
+    <div class="row"><span>|V|máx</span><span id="roVmax">—</span></div>
+    <div class="row"><span>|M|máx</span><span id="roMmax">—</span></div>
+  </div>
+  <div id="reactBox"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const cv=$('cv'), ctx=cv.getContext('2d');
+
+/* ===================== CONFIGURATIONS ===================== */
+const CONFIGS=[
+ {id:'simple', label:'Simplesmente apoiada', iso:1,
+   build:(L,s)=>({supports:[{x:0,type:'pin'},{x:L,type:'roller'}],hinges:[]}),
+   usesS:false, desc:'Articulação + rolete. Isostática. M = 0 nos dois apoios.'},
+ {id:'cantilever', label:'Consola (encastrada)', iso:1,
+   build:(L,s)=>({supports:[{x:0,type:'fixed'}],hinges:[]}),
+   usesS:false, desc:'Encastramento à esquerda, extremidade livre. Isostática. |M| máximo no apoio.'},
+ {id:'propped', label:'Consola escorada (encastr. + rolete)', iso:0,
+   build:(L,s)=>({supports:[{x:0,type:'fixed'},{x:L,type:'roller'}],hinges:[]}),
+   usesS:false, desc:'Encastrada numa ponta, apoiada na outra. 1× hiperstática.'},
+ {id:'fixedfixed', label:'Bi-encastrada', iso:0,
+   build:(L,s)=>({supports:[{x:0,type:'fixed'},{x:L,type:'fixed'}],hinges:[]}),
+   usesS:false, desc:'Encastrada nas duas pontas. 2× hiperstática. Momentos negativos nos apoios.'},
+ {id:'continuous', label:'Contínua — 2 vãos (apoio central) ⭐', iso:0,
+   build:(L,s)=>({supports:[{x:0,type:'pin'},{x:s,type:'roller'},{x:L,type:'roller'}],hinges:[]}),
+   usesS:true, sName:'Apoio central', sRange:L=>[0.18*L,0.82*L], sDefault:L=>0.5*L,
+   desc:'Três apoios → 1× hiperstática. Momento NEGATIVO sobre o apoio central.'},
+ {id:'overhang', label:'Com balanços (apoios recuados)', iso:1,
+   build:(L,s)=>({supports:[{x:s,type:'pin'},{x:L-s,type:'roller'}],hinges:[]}),
+   usesS:true, sName:'Recuo dos apoios', sRange:L=>[0.04*L,0.42*L], sDefault:L=>0.2*L,
+   desc:'Apoios afastados das pontas. Os balanços geram momento negativo sobre os apoios.'},
+ {id:'gerber', label:'Gerber (rótula + 3 apoios) ⭐', iso:1,
+   build:(L,s)=>({supports:[{x:0,type:'pin'},{x:0.4*L,type:'roller'},{x:L,type:'roller'}],hinges:[s]}),
+   usesS:true, sName:'Rótula', sRange:L=>[0.5*L,0.92*L], sDefault:L=>0.72*L,
+   desc:'A rótula liberta o momento (M=0) e torna a viga isostática. Vão suspenso à direita.'},
+ {id:'ffhinge', label:'Bi-encastrada com rótula ⭐', iso:0,
+   build:(L,s)=>({supports:[{x:0,type:'fixed'},{x:L,type:'fixed'}],hinges:[s]}),
+   usesS:true, sName:'Rótula', sRange:L=>[0.15*L,0.85*L], sDefault:L=>0.5*L,
+   desc:'Encastrada nas pontas, com rótula interior (M=0 aí). 1× hiperstática.'},
+];
+const cfgById=id=>CONFIGS.find(c=>c.id===id);
+let configId='simple';
+
+/* ===================== STATE ===================== */
+const inputs={ L:$('L'), s:$('s'), w:$('w'), P:$('P'), a:$('a'), alpha:$('alpha'), xcut:$('xcut') };
+const opt={ showReact:true, showComp:true, momentDown:false };
+function readParams(){
+  const L=+inputs.L.value;
+  return { L, s:+inputs.s.value, w:+inputs.w.value, P:+inputs.P.value,
+    a:Math.min(+inputs.a.value,L), alphaDeg:+inputs.alpha.value,
+    xcut:Math.min(+inputs.xcut.value,L), configId };
+}
+function buildConfig(p){ return cfgById(p.configId).build(p.L, p.s); }
+
+/* ===================== FE SOLVERS ===================== */
+function nodePositions(L,supports,hinges,a){
+  let xs=[0,L,a,...supports.map(s=>s.x),...hinges].map(x=>Math.max(0,Math.min(L,x)));
+  xs.sort((p,q)=>p-q);
+  const pos=[]; for(const x of xs) if(!pos.length||Math.abs(x-pos[pos.length-1])>1e-7) pos.push(x);
+  return pos;
+}
+function gauss(A,b){ const m=b.length;
+  for(let i=0;i<m;i++){ let piv=i; for(let r=i+1;r<m;r++) if(Math.abs(A[r][i])>Math.abs(A[piv][i])) piv=r;
+    [A[i],A[piv]]=[A[piv],A[i]]; [b[i],b[piv]]=[b[piv],b[i]];
+    for(let r=0;r<m;r++){ if(r===i) continue; const f=A[r][i]/A[i][i]; if(!f) continue;
+      for(let c=i;c<m;c++) A[r][c]-=f*A[i][c]; b[r]-=f*b[i]; } }
+  const x=new Float64Array(m); for(let i=0;i<m;i++) x[i]=b[i]/A[i][i]; return x;
+}
+// Euler-Bernoulli bending -> vertical & moment reactions
+function solveBending(L,supports,hinges,w,Pv,a){
+  const EI=1, pos=nodePositions(L,supports,hinges,a), n=pos.length;
+  const supAt=x=>supports.find(s=>Math.abs(s.x-x)<1e-4);
+  const meta=pos.map(x=>({x,sup:(supAt(x)||{}).type||null,hinge:hinges.some(h=>Math.abs(h-x)<1e-4)}));
+  const vIdx=[],th=[]; let D=0;
+  for(let k=0;k<n;k++) vIdx[k]=D++;
+  for(let k=0;k<n;k++) th[k]=meta[k].hinge?{L:D++,R:D++}:{s:D++};
+  const leftTh=k=>meta[k].hinge?th[k].R:th[k].s, rightTh=k=>meta[k].hinge?th[k].L:th[k].s;
+  const K=Array.from({length:D},()=>new Float64Array(D)), F=new Float64Array(D);
+  for(let e=0;e<n-1;e++){ const le=pos[e+1]-pos[e]; if(le<=1e-7) continue; const c=EI/(le*le*le);
+    const ke=[[12*c,6*le*c,-12*c,6*le*c],[6*le*c,4*le*le*c,-6*le*c,2*le*le*c],
+              [-12*c,-6*le*c,12*c,-6*le*c],[6*le*c,2*le*le*c,-6*le*c,4*le*le*c]];
+    const d=[vIdx[e],leftTh(e),vIdx[e+1],rightTh(e+1)];
+    for(let i=0;i<4;i++)for(let j=0;j<4;j++) K[d[i]][d[j]]+=ke[i][j];
+    const pp=-w, fe=[pp*le/2,pp*le*le/12,pp*le/2,-pp*le*le/12];
+    for(let i=0;i<4;i++) F[d[i]]+=fe[i]; }
+  let ka=0; for(let k=0;k<n;k++) if(Math.abs(pos[k]-a)<1e-4) ka=k;
+  F[vIdx[ka]]+=-Pv;
+  const fixed=new Array(D).fill(false);
+  for(let k=0;k<n;k++){ const t=meta[k].sup; if(!t) continue; fixed[vIdx[k]]=true; if(t==='fixed') fixed[th[k].s]=true; }
+  const free=[]; for(let i=0;i<D;i++) if(!fixed[i]) free.push(i);
+  const m=free.length, A=Array.from({length:m},()=>new Float64Array(m)), b=new Float64Array(m);
+  for(let i=0;i<m;i++){ b[i]=F[free[i]]; for(let j=0;j<m;j++) A[i][j]=K[free[i]][free[j]]; }
+  const sol=gauss(A,b); const d=new Float64Array(D); for(let i=0;i<m;i++) d[free[i]]=sol[i];
+  const react=[];
+  for(let k=0;k<n;k++){ const t=meta[k].sup; if(!t) continue;
+    let rv=-F[vIdx[k]]; for(let j=0;j<D;j++) rv+=K[vIdx[k]][j]*d[j];
+    let rm=0; if(t==='fixed'){ rm=-F[th[k].s]; for(let j=0;j<D;j++) rm+=K[th[k].s][j]*d[j]; }
+    react.push({x:pos[k],type:t,V:rv,M:rm}); }
+  return {react};
+}
+// Axial bar -> horizontal reactions (pin & fixed restrain; roller free)
+function solveAxial(L,supports,hinges,Ph,a){
+  const EA=1, pos=nodePositions(L,supports,hinges,a), n=pos.length;
+  const supAt=x=>supports.find(s=>Math.abs(s.x-x)<1e-4);
+  const meta=pos.map(x=>({x,sup:(supAt(x)||{}).type||null}));
+  const D=n, K=Array.from({length:D},()=>new Float64Array(D)), F=new Float64Array(D);
+  for(let e=0;e<n-1;e++){ const le=pos[e+1]-pos[e]; if(le<=1e-7) continue; const c=EA/le;
+    K[e][e]+=c; K[e][e+1]-=c; K[e+1][e]-=c; K[e+1][e+1]+=c; }
+  let ka=0; for(let k=0;k<n;k++) if(Math.abs(pos[k]-a)<1e-4) ka=k;
+  F[ka]+=Ph; // horizontal load (+x)
+  const fixed=new Array(D).fill(false);
+  for(let k=0;k<n;k++){ const t=meta[k].sup; if(t==='pin'||t==='fixed') fixed[k]=true; }
+  const free=[]; for(let i=0;i<D;i++) if(!fixed[i]) free.push(i);
+  const m=free.length; let d=new Float64Array(D);
+  if(m>0){ const A=Array.from({length:m},()=>new Float64Array(m)), b=new Float64Array(m);
+    for(let i=0;i<m;i++){ b[i]=F[free[i]]; for(let j=0;j<m;j++) A[i][j]=K[free[i]][free[j]]; }
+    const sol=gauss(A,b); for(let i=0;i<m;i++) d[free[i]]=sol[i]; }
+  const react=[];
+  for(let k=0;k<n;k++){ if(!fixed[k]) continue; let h=-F[k]; for(let j=0;j<D;j++) h+=K[k][j]*d[j]; react.push({x:pos[k],H:h}); }
+  return {react};
+}
+
+/* ===================== MODEL ===================== */
+function model(p){
+  const al=p.alphaDeg*Math.PI/180, Pv=p.P*Math.cos(al), Ph=p.P*Math.sin(al);
+  const cfg=buildConfig(p);
+  const react=solveBending(p.L,cfg.supports,cfg.hinges,p.w,Pv,p.a).react;
+  const axr=solveAxial(p.L,cfg.supports,cfg.hinges,Ph,p.a).react;
+  function internal(x){
+    let V=0,M=0,N=0;
+    for(const r of react){ if(r.x<=x+1e-9){ V+=r.V; M+=r.V*(x-r.x)-r.M; } }
+    V-=p.w*x; M-=p.w*x*x/2;
+    if(p.a<=x+1e-9){ V-=Pv; M-=Pv*(x-p.a); }
+    for(const r of axr){ if(r.x<=x+1e-9) N-=r.H; }
+    if(p.a<=x+1e-9) N-=Ph;
+    return {N,V,M};
+  }
+  return {cfg,react,axr,Pv,Ph,internal};
+}
+
+/* ===================== SERIES ===================== */
+function series(m,p,key){
+  const pts=[]; const L=p.L, Nn=320, eps=1e-6;
+  // breakpoints where jumps/kinks occur: supports, load a, hinges, ends
+  const bp=new Set([0,L,p.a]); m.react.forEach(r=>bp.add(r.x)); m.cfg.hinges.forEach(h=>bp.add(h));
+  const brk=[...bp].filter(x=>x>1e-6&&x<L-1e-6).sort((u,v)=>u-v);
+  let bi=0;
+  for(let i=0;i<=Nn;i++){ const x=L*i/Nn;
+    while(bi<brk.length && x>=brk[bi]){ const b=brk[bi];
+      pts.push({x:b,y:m.internal(b-eps)[key]});
+      pts.push({x:b,y:m.internal(b+eps)[key]}); bi++; }
+    pts.push({x,y:m.internal(x)[key]});
+  }
+  return pts;
+}
+function extent(pts){ let mn=0,mx=0; for(const p of pts){ if(p.y<mn)mn=p.y; if(p.y>mx)mx=p.y; } return {mn,mx,mag:Math.max(Math.abs(mn),Math.abs(mx))}; }
+
+/* ===================== DRAW ===================== */
+let W=0,H=0,dpr=1;
+function resize(){ const r=$('main').getBoundingClientRect(); dpr=Math.max(1,window.devicePixelRatio||1);
+  W=r.width; H=r.height; cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); draw(); }
+function getCss(n){ return n.indexOf('--')===0?getComputedStyle(document.documentElement).getPropertyValue(n).trim():n; }
+function hexA(hex,a){ const h=hex.replace('#',''); return `rgba(${parseInt(h.substr(0,2),16)},${parseInt(h.substr(2,2),16)},${parseInt(h.substr(4,2),16)},${a})`; }
+function fmt(v){ if(Math.abs(v)<5e-3)return '0'; const a=Math.abs(v),d=a<10?2:(a<100?1:0); return (v<0?'−':'')+a.toFixed(d); }
+function arrow(x1,y1,x2,y2,color,wd){ ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=wd||2;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  const ang=Math.atan2(y2-y1,x2-x1),h=8+(wd||2);
+  ctx.beginPath(); ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-h*Math.cos(ang-0.4),y2-h*Math.sin(ang-0.4));
+  ctx.lineTo(x2-h*Math.cos(ang+0.4),y2-h*Math.sin(ang+0.4)); ctx.closePath(); ctx.fill(); }
+function txt(s,x,y,color,size,align,weight){ ctx.fillStyle=color; ctx.font=(weight||'')+' '+(size||12)+'px -apple-system,Segoe UI,sans-serif';
+  ctx.textAlign=align||'left'; ctx.textBaseline='middle'; ctx.fillText(s,x,y); }
+
+const mL=72,mR=34; let geom={};
+function computeGeom(p){ const plotW=W-mL-mR; const xToPx=x=>mL+(x/p.L)*plotW;
+  const padTop=14, beamH=182, beamLine=padTop+102, diagTop=padTop+beamH+6;
+  const remaining=H-diagTop-14, hb=remaining/3;
+  geom={plotW,xToPx,beamLine,diagTop,hb,bands:[
+    {key:'N',top:diagTop,color:'#4aa3ff',title:'N  —  Esforço Normal',unit:'kN'},
+    {key:'V',top:diagTop+hb,color:'#2ecc71',title:'V  —  Esforço Transverso',unit:'kN'},
+    {key:'M',top:diagTop+2*hb,color:'#e74c3c',title:'M  —  Momento Fletor',unit:'kN·m'}]};
+}
+
+function drawSupports(p,m){
+  const y=geom.beamLine;
+  for(const s of m.cfg.supports){ const x=geom.xToPx(s.x);
+    if(s.type==='pin') drawPin(x,y+7);
+    else if(s.type==='roller') drawRoller(x,y+7);
+    else drawWall(x,y, s.x<p.L/2?-1:1); }
+  for(const h of m.cfg.hinges){ drawHinge(geom.xToPx(h),y); }
+}
+function drawPin(x,y){ ctx.fillStyle='#8893ab';
+  ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-13,y+20); ctx.lineTo(x+13,y+20); ctx.closePath(); ctx.fill(); hatch(x-18,y+20,36); }
+function drawRoller(x,y){ ctx.fillStyle='#8893ab';
+  ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-13,y+15); ctx.lineTo(x+13,y+15); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.arc(x-7,y+19,4,0,7); ctx.arc(x+7,y+19,4,0,7); ctx.fill(); hatch(x-18,y+23,36); }
+function drawWall(x,y,side){ ctx.fillStyle='#8893ab'; const bx=side<0?x-7:x; ctx.fillRect(bx,y-34,7,68); hatchVert(side<0?x-7:x+7,y-34,68,side); }
+function drawHinge(x,y){ ctx.fillStyle=getCss('--bg-primary'); ctx.strokeStyle=getCss('--accent-orange'); ctx.lineWidth=2.2;
+  ctx.beginPath(); ctx.arc(x,y,5.5,0,7); ctx.fill(); ctx.stroke();
+  txt('rótula', x, y-15, getCss('--accent-orange'),10,'center','600'); }
+function hatch(x,y,len){ ctx.strokeStyle='#6a6a8a'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+len,y); ctx.stroke();
+  for(let i=0;i<len;i+=6){ ctx.beginPath(); ctx.moveTo(x+i,y); ctx.lineTo(x+i-6,y+7); ctx.stroke(); } }
+function hatchVert(x,y,len,side){ ctx.strokeStyle='#6a6a8a'; ctx.lineWidth=1; const dx=(side<0?-1:1)*7;
+  ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,y+len); ctx.stroke();
+  for(let i=0;i<len;i+=6){ ctx.beginPath(); ctx.moveTo(x,y+i); ctx.lineTo(x+dx,y+i+6); ctx.stroke(); } }
+
+function drawReactionV(x,val){ if(Math.abs(val)<5e-3) return; const yc=getCss('--accent-yellow'),up=val>0;
+  const px=geom.xToPx(x), y0=geom.beamLine+36;
+  if(up) arrow(px,y0+26,px,y0,yc,2.2); else arrow(px,y0,px,y0+26,yc,2.2);
+  txt(fmt(Math.abs(val)), px, y0+40, yc,11,'center','600'); }
+function drawReactionM(x,M,p){ if(Math.abs(M)<5e-3) return; const yc=getCss('--accent-yellow'),y=geom.beamLine,px=geom.xToPx(x);
+  ctx.strokeStyle=yc; ctx.lineWidth=2.2; const r=20;
+  ctx.beginPath(); ctx.arc(px,y,r,-0.62*Math.PI,0.62*Math.PI,M>0); ctx.stroke();
+  const a2=(M>0?-0.62:0.62)*Math.PI, dir=M>0?-1:1;
+  arrow(px+r*Math.cos(a2+0.18*dir),y+r*Math.sin(a2+0.18*dir),px+r*Math.cos(a2),y+r*Math.sin(a2),yc,2);
+  txt('M='+fmt(Math.abs(M)), px, y-r-11, yc,10.5,'center','600'); }
+function drawReactionH(x,Hh){ if(Math.abs(Hh)<5e-3) return; const yc=getCss('--accent-yellow'),y=geom.beamLine,px=geom.xToPx(x);
+  const dir=Hh>0?1:-1; arrow(px-dir*42,y,px,y,yc,2.1);
+  txt('H='+fmt(Math.abs(Hh)), px-dir*46, y-12, yc,10.5, dir>0?'right':'left','600'); }
+
+function drawBeam(p,m){
+  const y=geom.beamLine, x0=geom.xToPx(0), x1=geom.xToPx(p.L), xc=geom.xToPx(p.xcut);
+  ctx.fillStyle='rgba(241,196,15,0.07)'; ctx.fillRect(x0,y-46,xc-x0,92);          // isolated segment
+  ctx.fillStyle='#cdd6e6'; ctx.strokeStyle='#8893ab'; ctx.lineWidth=1;
+  ctx.fillRect(x0,y-7,x1-x0,14); ctx.strokeRect(x0,y-7,x1-x0,14);                 // beam
+  drawSupports(p,m);
+
+  if(p.w>0){ const top=y-58; ctx.strokeStyle=getCss('--dist'); ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(x0,top); ctx.lineTo(x1,top); ctx.stroke();
+    const n=Math.max(2,Math.round((x1-x0)/34));
+    for(let i=0;i<=n;i++){ const xx=x0+(x1-x0)*i/n; arrow(xx,top,xx,y-9,getCss('--dist'),1.5); }
+    txt('w = '+fmt(p.w)+' kN/m',(x0+x1)/2,top-12,getCss('--dist'),12,'center','600'); }
+
+  if(p.P>0){ const xa=geom.xToPx(p.a), al=p.alphaDeg*Math.PI/180, len=52, dx=Math.sin(al), dy=Math.cos(al);
+    const sx=xa-dx*len, sy=(y-9)-dy*len;
+    if(opt.showComp && p.alphaDeg>0){ ctx.save(); ctx.setLineDash([4,3]);
+      arrow(sx,sy,sx,y-9,'#ffb3ae',1.4); arrow(sx,sy,sx+dx*len,sy,'#ffb3ae',1.4); ctx.restore();
+      txt('Pv='+fmt(m.Pv),sx-6,(sy+y-9)/2,'#ffb3ae',10.5,'right');
+      txt('Ph='+fmt(m.Ph),(sx+xa)/2,sy-8,'#ffb3ae',10.5,'center'); }
+    arrow(sx,sy,xa,y-9,getCss('--load'),2.5);
+    txt('P = '+fmt(p.P)+' kN'+(p.alphaDeg>0?(' ('+p.alphaDeg+'°)'):''),sx,sy-10,getCss('--load'),12.5,'center','700'); }
+
+  if(opt.showReact){ for(const r of m.react){ drawReactionV(r.x,r.V); if(r.type==='fixed') drawReactionM(r.x,r.M,p); }
+    for(const r of m.axr) drawReactionH(r.x,r.H); }
+  txt('x = '+fmt(p.xcut)+' m',xc,y-58,getCss('--accent-yellow'),11.5,'center','600');
+}
+
+function drawGuides(p,m){ // faint vertical lines at supports/hinges across the whole figure
+  const yTop=geom.beamLine-46, yBot=H-8;
+  ctx.save(); ctx.lineWidth=1;
+  for(const s of m.cfg.supports){ ctx.strokeStyle='rgba(255,255,255,0.05)'; const x=geom.xToPx(s.x);
+    ctx.beginPath(); ctx.moveTo(x,yTop); ctx.lineTo(x,yBot); ctx.stroke(); }
+  for(const h of m.cfg.hinges){ ctx.strokeStyle='rgba(230,126,34,0.18)'; ctx.setLineDash([3,3]); const x=geom.xToPx(h);
+    ctx.beginPath(); ctx.moveTo(x,yTop); ctx.lineTo(x,yBot); ctx.stroke(); ctx.setLineDash([]); }
+  ctx.restore();
+}
+
+function drawDiagram(band,pts,p,m){
+  const top=band.top, hb=geom.hb, base=top+hb*0.52, hh=hb*0.36;
+  const ext=extent(pts), mag=Math.max(ext.mag,1e-9);
+  const flip=(band.key==='M'&&opt.momentDown)?-1:1, yOf=v=>base-flip*(v/mag)*hh, xToPx=geom.xToPx;
+  txt(band.title,8,top+13,band.color,12.5,'left','700');
+  ctx.fillStyle=getCss('--text-dim'); ctx.font='11px sans-serif'; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText('['+band.unit+']',8,top+28);
+  ctx.strokeStyle='#39456b'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(mL,base); ctx.lineTo(W-mR,base); ctx.stroke();
+  ctx.fillStyle=getCss('--text-dim'); ctx.font='10px sans-serif'; ctx.textAlign='right'; ctx.fillText('0',mL-6,base);
+
+  if(ext.mag<5e-3){ txt('= 0',(W)/2,base-12,getCss('--text-dim'),11.5,'center'); drawCutDot(band,base,mag,flip,hh,m,p); return; }
+
+  ctx.beginPath(); ctx.moveTo(xToPx(pts[0].x),base);
+  for(const pt of pts) ctx.lineTo(xToPx(pt.x),yOf(pt.y));
+  ctx.lineTo(xToPx(pts[pts.length-1].x),base); ctx.closePath();
+  ctx.fillStyle=hexA(band.color,0.20); ctx.fill();
+  ctx.beginPath(); pts.forEach((pt,i)=>{ const X=xToPx(pt.x),Y=yOf(pt.y); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y); });
+  ctx.strokeStyle=band.color; ctx.lineWidth=2.2; ctx.stroke();
+
+  let iMax=0,iMin=0; pts.forEach((pt,i)=>{ if(pt.y>pts[iMax].y)iMax=i; if(pt.y<pts[iMin].y)iMin=i; });
+  const labelPt=i=>{ const pt=pts[i]; if(Math.abs(pt.y)<5e-3)return; const X=xToPx(pt.x),Y=yOf(pt.y);
+    ctx.fillStyle=band.color; ctx.beginPath(); ctx.arc(X,Y,3,0,7); ctx.fill();
+    txt(fmt(pt.y),X,Y+(pt.y>=0?(flip>0?-10:14):(flip>0?14:-10)),band.color,11,'center','700'); };
+  labelPt(iMax); if(iMin!==iMax) labelPt(iMin);
+
+  // mark M=0 at hinges
+  if(band.key==='M'){ for(const h of m.cfg.hinges){ const X=xToPx(h);
+    ctx.fillStyle=getCss('--bg-primary'); ctx.strokeStyle=getCss('--accent-orange'); ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.arc(X,base,4,0,7); ctx.fill(); ctx.stroke(); } }
+
+  drawCutDot(band,base,mag,flip,hh,m,p);
+}
+function drawCutDot(band,base,mag,flip,hh,m,p){ const v=m.internal(p.xcut)[band.key];
+  const X=geom.xToPx(p.xcut), Y=base-flip*(v/Math.max(mag,1e-9))*hh;
+  ctx.fillStyle=getCss('--accent-yellow'); ctx.beginPath(); ctx.arc(X,Y,4.5,0,7); ctx.fill();
+  ctx.strokeStyle='#0d1830'; ctx.lineWidth=1.5; ctx.stroke(); }
+
+function draw(){ const p=readParams(), m=model(p); computeGeom(p); ctx.clearRect(0,0,W,H);
+  drawGuides(p,m);
+  const xc=geom.xToPx(p.xcut);
+  ctx.save(); ctx.setLineDash([5,4]); ctx.strokeStyle='rgba(241,196,15,0.55)'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.moveTo(xc,geom.beamLine-60); ctx.lineTo(xc,H-8); ctx.stroke(); ctx.restore();
+  drawBeam(p,m);
+  drawDiagram(geom.bands[0],series(m,p,'N'),p,m);
+  drawDiagram(geom.bands[1],series(m,p,'V'),p,m);
+  drawDiagram(geom.bands[2],series(m,p,'M'),p,m);
+  ctx.fillStyle=getCss('--accent-yellow'); ctx.beginPath(); ctx.arc(xc,geom.beamLine,6,0,7); ctx.fill();
+  ctx.strokeStyle='#0d1830'; ctx.lineWidth=2; ctx.stroke();
+  updateReadouts(p,m);
+}
+
+function updateReadouts(p,m){ const ic=m.internal(p.xcut);
+  $('roX').textContent=fmt(p.xcut); $('roN').textContent=fmt(ic.N)+' kN';
+  $('roV').textContent=fmt(ic.V)+' kN'; $('roM').textContent=fmt(ic.M)+' kN·m';
+  let vmax=0,mmax=0; const sV=series(m,p,'V'),sM=series(m,p,'M');
+  for(const q of sV) vmax=Math.max(vmax,Math.abs(q.y)); for(const q of sM) mmax=Math.max(mmax,Math.abs(q.y));
+  $('roVmax').textContent=fmt(vmax)+' kN'; $('roMmax').textContent=fmt(mmax)+' kN·m';
+  let html='<div class="ttl">Reações de apoio</div>';
+  m.react.forEach(r=>{ const nm=r.x<1e-4?'A':(r.x>p.L-1e-4?'B':'x='+fmt(r.x));
+    html+=row('V<sub>'+nm+'</sub>',r.V,'kN'); if(r.type==='fixed') html+=row('M<sub>'+nm+'</sub>',r.M,'kN·m'); });
+  m.axr.forEach(r=>{ if(Math.abs(r.H)>5e-3){ const nm=r.x<1e-4?'A':(r.x>p.L-1e-4?'B':'x='+fmt(r.x)); html+=row('H<sub>'+nm+'</sub>',r.H,'kN'); } });
+  $('reactBox').innerHTML=html;
+}
+function row(k,v,u){ return '<div class="row"><span>'+k+'</span><span>'+fmt(v)+' '+u+'</span></div>'; }
+
+/* ===================== INTERACTION ===================== */
+function pxToX(px){ const p=readParams(); return Math.max(0,Math.min(p.L,(px-mL)/geom.plotW*p.L)); }
+let dragging=false;
+function setCut(clientX){ const r=cv.getBoundingClientRect(); inputs.xcut.value=pxToX(clientX-r.left).toFixed(2); syncLabels(); draw(); }
+cv.addEventListener('pointerdown',e=>{ dragging=true; cv.setPointerCapture(e.pointerId); setCut(e.clientX); });
+cv.addEventListener('pointermove',e=>{ if(dragging) setCut(e.clientX); });
+cv.addEventListener('pointerup',()=>dragging=false); cv.addEventListener('pointercancel',()=>dragging=false);
+
+function syncLabels(){ const p=readParams();
+  $('Lval').textContent=p.L.toFixed(1)+' m'; $('wval').textContent=fmt(p.w)+' kN/m';
+  $('Pval').textContent=p.P+' kN'; $('aval').textContent=p.a.toFixed(1)+' m';
+  $('alphaval').textContent=p.alphaDeg+'°'; $('xcutval').textContent=p.xcut.toFixed(2)+' m';
+  $('sval').textContent=p.s.toFixed(2)+' m'; }
+function clampToL(){ const L=+inputs.L.value; inputs.a.max=L; inputs.xcut.max=L;
+  if(+inputs.a.value>L) inputs.a.value=L; if(+inputs.xcut.value>L) inputs.xcut.value=L; }
+function refreshSRange(keepValue){ const c=cfgById(configId), L=+inputs.L.value;
+  if(c.usesS){ const [mn,mx]=c.sRange(L); inputs.s.min=mn.toFixed(2); inputs.s.max=mx.toFixed(2);
+    let v=keepValue?+inputs.s.value:c.sDefault(L); v=Math.max(mn,Math.min(mx,v)); inputs.s.value=v.toFixed(2);
+    $('sName').textContent=c.sName; } }
+function applyConfig(id,keepS){ configId=id; const c=cfgById(id);
+  $('cfgDesc').textContent=c.desc;
+  $('cfgTag').innerHTML=c.iso?'<span class="tag iso">isostática</span>':'<span class="tag hyp">hiperstática</span>';
+  $('sGroup').classList.toggle('hidden',!c.usesS);
+  refreshSRange(keepS); clampToL(); syncLabels(); draw(); }
+
+// build dropdown
+CONFIGS.forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.textContent=c.label; $('config').appendChild(o); });
+$('config').addEventListener('change',e=>applyConfig(e.target.value,false));
+
+Object.values(inputs).forEach(el=>el.addEventListener('input',()=>{ if(el===inputs.L){ clampToL(); refreshSRange(true); } syncLabels(); draw(); }));
+['showReact','showComp','momentDown'].forEach(id=>$(id).addEventListener('change',e=>{ opt[id]=e.target.checked; draw(); }));
+
+const PRESETS={
+  meio:{config:'simple',L:6,w:0,P:20,a:3,alpha:0},
+  incl:{config:'simple',L:6,w:0,P:30,a:4,alpha:35},
+  cont:{config:'continuous',L:8,w:12,P:0,a:4,alpha:0,s:4},
+  gerber:{config:'gerber',L:9,w:10,P:0,a:4.5,alpha:0,s:6.5},
+  overhang:{config:'overhang',L:8,w:12,P:0,a:4,alpha:0,s:1.6},
+  propped:{config:'propped',L:6,w:14,P:0,a:3,alpha:0},
+  ffhinge:{config:'ffhinge',L:8,w:0,P:30,a:5,alpha:0,s:5},
+};
+document.querySelector('.presets').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return;
+  const s=PRESETS[b.dataset.preset]; if(!s)return;
+  configId=s.config; $('config').value=s.config;
+  inputs.L.value=s.L; clampToL();
+  inputs.w.value=s.w; inputs.P.value=s.P; inputs.a.value=Math.min(s.a,s.L); inputs.alpha.value=s.alpha;
+  inputs.xcut.value=(s.L/2).toFixed(2);
+  applyConfig(s.config, false);
+  if(s.s!==undefined){ inputs.s.value=s.s; }
+  syncLabels(); draw();
+});
+
+window.addEventListener('resize',resize);
+applyConfig('simple',false); clampToL(); syncLabels(); resize();
+})();
+</script>
+</body>
+</html>

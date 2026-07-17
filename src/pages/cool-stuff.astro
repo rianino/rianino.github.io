@@ -1,0 +1,124 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Cool Stuff I Made — Rian" description="Interactive visualizations and simulations from engineering projects.">
+  <h1>Cool Stuff I Made</h1>
+
+  <section class="project">
+    <h2>How long until the pizza is ready to eat?</h2>
+    <p class="project-meta">CFD study · OpenFOAM · Fluid Mechanics I</p>
+    <a href="/cool-stuff/pizza-cfd.html" target="_blank" rel="noopener">
+      <img src="/images/cool-stuff/pizza-cfd.png" alt="Pizza cooling CFD visualization" loading="lazy" />
+    </a>
+    <p class="open-link"><a href="/cool-stuff/pizza-cfd.html" target="_blank" rel="noopener">Open the interactive visualization →</a></p>
+    <p>
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
+      incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
+      nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+    </p>
+  </section>
+
+  <section class="project">
+    <h2>Stress State Visualizer</h2>
+    <p class="project-meta">Interactive 3D · three.js · Solid Mechanics</p>
+    <iframe src="/cool-stuff/stress-visualizer.html" title="Stress state visualizer" loading="lazy"></iframe>
+    <p class="open-link"><a href="/cool-stuff/stress-visualizer.html" target="_blank" rel="noopener">Open full screen →</a></p>
+    <p>
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis aute irure dolor
+      in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+    </p>
+  </section>
+
+  <section class="project">
+    <h2>N · V · M Diagrams</h2>
+    <p class="project-meta">Internal forces in beams · Solid Mechanics</p>
+    <iframe src="/cool-stuff/nvm-diagrams.html" title="Beam internal force diagrams" loading="lazy"></iframe>
+    <p class="open-link"><a href="/cool-stuff/nvm-diagrams.html" target="_blank" rel="noopener">Open full screen →</a></p>
+    <p>
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Excepteur sint occaecat
+      cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+    </p>
+    <div class="image-pair">
+      <img src="/images/cool-stuff/distribuicao-tensoes.png" alt="Stress distribution in a beam cross-section" loading="lazy" />
+      <img src="/images/cool-stuff/empenamento.png" alt="Cross-section warping visualization" loading="lazy" />
+    </div>
+    <p>
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ut perspiciatis unde
+      omnis iste natus error sit voluptatem accusantium doloremque laudantium.
+    </p>
+  </section>
+
+  <section class="project">
+    <h2>Rocket Flight Simulation</h2>
+    <p class="project-meta">3DOF / 6DOF flight dynamics · Python · INVICTUS II</p>
+    <img src="/images/cool-stuff/rocket-3dof.png" alt="3DOF rocket trajectory simulation" loading="lazy" />
+    <p>
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nemo enim ipsam
+      voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur
+      magni dolores eos qui ratione voluptatem sequi nesciunt.
+    </p>
+  </section>
+</BaseLayout>
+
+<style>
+  h1 {
+    font-size: var(--text-2xl);
+    margin-block: var(--space-8) var(--space-12);
+  }
+
+  .project {
+    margin-bottom: var(--space-16);
+  }
+
+  .project h2 {
+    font-size: var(--text-xl);
+    margin-bottom: var(--space-1);
+  }
+
+  .project-meta {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-4);
+  }
+
+  .project p {
+    margin-bottom: var(--space-4);
+    line-height: 1.6;
+  }
+
+  .project img {
+    max-width: 100%;
+    border-radius: 6px;
+    margin-bottom: var(--space-2);
+  }
+
+  .project iframe {
+    width: 100%;
+    height: 480px;
+    border: 1px solid var(--color-border, #ddd);
+    border-radius: 6px;
+    margin-bottom: var(--space-2);
+  }
+
+  .open-link {
+    font-size: var(--text-sm);
+  }
+
+  .image-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    margin-block: var(--space-4);
+  }
+
+  .image-pair img {
+    width: 100%;
+  }
+
+  @media (max-width: 600px) {
+    .image-pair {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
