@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Bio from '../components/Bio.astro';
+import FlowField from '../components/FlowField.astro';
 import BlogPostList from '../components/BlogPostList.astro';
 import { readingTime } from '../lib/readingTime';
 
@@ -17,7 +18,31 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft))
 ---
 
 <BaseLayout title="Rian Apolo">
-  <Bio />
+  <div class="hero">
+    <Bio />
+    <FlowField />
+  </div>
   <hr />
   <BlogPostList posts={posts} />
 </BaseLayout>
+
+<style>
+  .hero {
+    display: grid;
+    grid-template-columns: 1.618fr 1fr;
+    gap: var(--space-8);
+    align-items: center;
+  }
+
+  /* Bio already pads itself; let the figure sit tight in the hero. */
+  .hero :global(.bio) {
+    padding-block: var(--space-8);
+  }
+
+  @media (max-width: 720px) {
+    .hero {
+      grid-template-columns: 1fr;
+      gap: var(--space-4);
+    }
+  }
+</style>

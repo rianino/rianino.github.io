@@ -1,0 +1,105 @@
+---
+// Codex plate — the regular solids as skeletal wireframes, after Leonardo's
+// plates for De Divina Proportione. Rotates; click cycles solids; follows the
+// pointer. Loads three.js from CDN (only on pages that use it).
+---
+
+<figure class="platefig">
+  <canvas id="c3d"></canvas>
+  <figcaption>
+    <span class="mono">Fig. — <span id="solidname">Duodecedron planus solidus</span></span>
+    <span class="mono solidmeta" id="solidmeta">12 · pentagona · φ</span>
+  </figcaption>
+</figure>
+
+<style>
+  .platefig {
+    position: relative;
+    border: 1px solid var(--color-border-strong);
+    padding: var(--space-3);
+    max-width: 420px;
+  }
+  #c3d {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    display: block;
+    cursor: crosshair;
+  }
+  .platefig figcaption {
+    margin-top: var(--space-2);
+    display: flex;
+    justify-content: space-between;
+  }
+  .solidmeta {
+    color: var(--color-gold);
+  }
+</style>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
+<script type="module">
+  import * as THREE from 'three';
+  const c = document.getElementById('c3d');
+  if (c) {
+    const renderer = new THREE.WebGLRenderer({ canvas: c, antialias: true, alpha: true });
+    const scene = new THREE.Scene();
+    const cam = new THREE.PerspectiveCamera(32, 1, 0.1, 100); cam.position.z = 7;
+    // Read resolved rgb(...) strings off rendered elements — THREE.Color
+    // parses rgb() and this sidesteps unresolved var() chains on custom props.
+    const inkHex = () => new THREE.Color(getComputedStyle(document.body).color).getHex();
+    const paperHex = () => new THREE.Color(getComputedStyle(document.body).backgroundColor).getHex();
+    const solids = [
+      { g: () => new THREE.TetrahedronGeometry(2.1), n: 'Tetracedron planus solidus', m: '4 · triangona' },
+      { g: () => new THREE.BoxGeometry(2.4, 2.4, 2.4), n: 'Exacedron planus solidus', m: '6 · quadrata' },
+      { g: () => new THREE.OctahedronGeometry(2.1), n: 'Octocedron planus solidus', m: '8 · triangona' },
+      { g: () => new THREE.DodecahedronGeometry(1.9), n: 'Duodecedron planus solidus', m: '12 · pentagona · φ' },
+      { g: () => new THREE.IcosahedronGeometry(2.0), n: 'Ycocedron planus solidus', m: '20 · triangona · φ' },
+    ];
+    let idx = 3;
+    const group = new THREE.Group(); scene.add(group);
+    function build() {
+      group.clear();
+      const geo = solids[idx].g();
+      const ink = inkHex();
+      group.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),
+        new THREE.LineBasicMaterial({ color: ink, transparent: true, opacity: 0.12, depthTest: false })));
+      group.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+        color: paperHex(), polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2,
+      })));
+      group.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: ink })));
+      const pos = geo.attributes.position, seen = new Set(), verts = [];
+      for (let i = 0; i < pos.count; i++) {
+        const k = [pos.getX(i), pos.getY(i), pos.getZ(i)].map((v) => v.toFixed(3)).join(',');
+        if (!seen.has(k)) { seen.add(k); verts.push(new THREE.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i))); }
+      }
+      group.add(new THREE.Points(new THREE.BufferGeometry().setFromPoints(verts),
+        new THREE.PointsMaterial({ color: 0xb08d2e, size: 0.09 })));
+      document.getElementById('solidname').textContent = solids[idx].n;
+      document.getElementById('solidmeta').textContent = solids[idx].m;
+    }
+    build();
+    c.addEventListener('click', () => { idx = (idx + 1) % solids.length; build(); });
+    new MutationObserver(() => build()).observe(document.documentElement, {
+      attributes: true, attributeFilter: ['data-theme'],
+    });
+    let tx = 0, ty = 0;
+    addEventListener('pointermove', (e) => {
+      ty = (e.clientX / innerWidth - 0.5) * 0.5;
+      tx = (e.clientY / innerHeight - 0.5) * 0.35;
+    });
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function size() {
+      const w = c.clientWidth || 420;
+      renderer.setSize(w, w, false);
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    }
+    size(); addEventListener('resize', size);
+    let rx = 0, ry = 0;
+    (function loop() {
+      requestAnimationFrame(loop);
+      if (!reduce) ry += 0.0032;
+      rx += (tx - rx) * 0.04;
+      group.rotation.set(0.35 + rx, ry + ty, 0);
+      renderer.render(scene, cam);
+    })();
+  }
+</script>

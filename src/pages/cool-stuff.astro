@@ -1,9 +1,16 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Polyhedra from '../components/Polyhedra.astro';
 ---
 
 <BaseLayout title="Cool Stuff I Made — Rian" description="Interactive visualizations and simulations from engineering projects.">
-  <h1>Cool Stuff I Made</h1>
+  <div class="page-head">
+    <div>
+      <h1>Cool Stuff I Made</h1>
+      <p class="page-lede">Interactive visualizations and simulations from engineering projects. The solid at right turns under the drawing convention of the whole site — click it.</p>
+    </div>
+    <Polyhedra />
+  </div>
 
   <section class="project">
     <h2>How long until the pizza is ready to eat?</h2>
@@ -84,9 +91,29 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 </BaseLayout>
 
 <style>
+  .page-head {
+    display: grid;
+    grid-template-columns: 1.618fr 1fr;
+    gap: var(--space-8);
+    align-items: center;
+    margin-block: var(--space-8) var(--space-12);
+  }
+
   h1 {
     font-size: var(--text-2xl);
-    margin-block: var(--space-8) var(--space-12);
+    margin-bottom: var(--space-3);
+  }
+
+  .page-lede {
+    color: var(--color-text-secondary);
+    line-height: var(--leading-normal);
+  }
+
+  @media (max-width: 720px) {
+    .page-head {
+      grid-template-columns: 1fr;
+      gap: var(--space-4);
+    }
   }
 
   .project {
