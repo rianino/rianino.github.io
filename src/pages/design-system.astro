@@ -1,0 +1,395 @@
+---
+// Standalone page: the "Codex" design language specimen.
+// Self-contained (own fonts, styles, canvas scripts) — deliberately outside
+// BaseLayout so it can own the full framed-sheet chrome.
+const canonical = 'https://rian.pt/design-system';
+---
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Codex — a design language</title>
+<meta name="description" content="Codex — the design language of rian.pt: a master's notebook, drawn by a machine." />
+<link rel="canonical" href={canonical} />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --paper:#f7f6f2; --ink:#16161a;
+  --ink-60:rgba(22,22,26,.6); --ink-30:rgba(22,22,26,.3); --ink-12:rgba(22,22,26,.12);
+  --lapis:#2447a0; --gold:#b08d2e;
+  --s1:8px; --s2:16px; --s3:24px; --s4:32px; --s6:48px; --s8:64px; --s12:96px;
+  --t-base:1.0625rem; --t-lg:1.417rem; --t-xl:1.889rem; --t-2xl:2.518rem; --t-3xl:3.357rem; --t-4xl:4.474rem;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{background:var(--ink)}
+body{
+  font-family:'Libre Caslon Text',serif; font-size:var(--t-base); line-height:1.6;
+  color:var(--ink); background:var(--paper);
+  margin:12px; border:1.5px solid var(--ink); position:relative;
+}
+h1,h2,.display{font-family:'Libre Caslon Display',serif;font-weight:400}
+.mono{font-family:'Courier Prime',monospace;font-size:.68rem;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-60)}
+.mono b{font-weight:700;color:var(--ink)}
+.grain{position:fixed;inset:0;pointer-events:none;opacity:.35;z-index:9}
+.wrap{max-width:1160px;margin:0 auto;padding:0 var(--s4)}
+.reg{position:absolute;width:17px;height:17px;pointer-events:none}
+.reg::before,.reg::after{content:'';position:absolute;background:var(--ink)}
+.reg::before{left:8px;top:0;width:1px;height:17px}
+.reg::after{top:8px;left:0;height:1px;width:17px}
+.reg.tl{top:10px;left:10px}.reg.tr{top:10px;right:10px}.reg.bl{bottom:10px;left:10px}.reg.br{bottom:10px;right:10px}
+
+.backlink{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:10;font-family:'Courier Prime',monospace;font-size:.62rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-60);text-decoration:none;border-bottom:1px solid var(--ink-30);padding-bottom:2px}
+.backlink:hover{color:var(--lapis);border-color:var(--lapis)}
+
+header{border-bottom:1.5px solid var(--ink)}
+header .wrap{display:flex;align-items:stretch;justify-content:space-between;padding:0}
+.wordmark{font-family:'Libre Caslon Display',serif;font-size:var(--t-lg);padding:var(--s2) var(--s4);border-right:1px solid var(--ink-30)}
+.wordmark i{color:var(--lapis)}
+.hcell{display:flex;align-items:center;padding:0 var(--s4);border-left:1px solid var(--ink-30)}
+
+.hero{padding:var(--s12) 0}
+.hero .wrap{display:grid;grid-template-columns:1.618fr 1fr;gap:var(--s8);align-items:center}
+.hero h1{font-size:var(--t-4xl);line-height:1.04;letter-spacing:-0.01em;margin:var(--s3) 0 var(--s4)}
+.hero h1 i{color:var(--lapis)}
+.hero p{max-width:30em;margin-bottom:var(--s4);font-size:var(--t-base)}
+.tag{display:inline-block;border:1px solid var(--ink);padding:6px 14px}
+.fig{position:relative;border-left:1px solid var(--ink-30);padding-left:var(--s6)}
+.fig figcaption{margin-top:var(--s2);display:flex;justify-content:space-between}
+
+.specimen{border-top:1.5px solid var(--ink)}
+.specimen .wrap{display:grid;grid-template-columns:1fr 1fr 1fr;max-width:none;padding:0}
+.spec{padding:var(--s6) var(--s4);border-right:1px solid var(--ink-30)}
+.spec:last-child{border-right:none}
+.spec .idx{color:var(--gold);font-weight:700}
+.spec h2{font-size:var(--t-xl);margin:var(--s1) 0 var(--s2)}
+.spec p{font-size:.9375rem}
+.spec .mono{display:block;margin-top:var(--s3)}
+.swatches{display:flex;gap:var(--s1);margin-top:var(--s3)}
+.sw{width:44px;height:44px;border:1px solid var(--ink)}
+
+.axiom{background:var(--ink);color:var(--paper);border-top:1.5px solid var(--ink);padding:var(--s8) 0}
+.axiom .wrap{display:grid;grid-template-columns:1.618fr 1fr;gap:var(--s6);align-items:center}
+.axiom blockquote{font-family:'Libre Caslon Display',serif;font-size:var(--t-2xl);line-height:1.18}
+.axiom blockquote i{color:var(--gold)}
+.axiom .mono{color:rgba(247,246,242,.55)}
+.axiom p{font-size:.9375rem;opacity:.85;margin-top:var(--s2)}
+
+.tblock{border-top:1.5px solid var(--ink);display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1.2fr}
+.tcell{padding:10px var(--s3);border-right:1px solid var(--ink-30)}
+.tcell:last-child{border-right:none}
+.tcell .mono{display:block;font-size:.58rem;color:var(--ink-30);margin-bottom:2px}
+.tcell .val{font-family:'Courier Prime',monospace;font-size:.78rem;letter-spacing:.03em}
+.tcell .val i{color:var(--lapis);font-style:normal}
+
+svg text{font-family:'Courier Prime',monospace}
+#progress{position:fixed;top:12px;left:12px;height:2px;background:var(--lapis);width:0;z-index:8}
+.plate{border-top:1.5px solid var(--ink);padding:var(--s12) 0}
+.study .wrap{display:grid;grid-template-columns:1fr 1.618fr;gap:var(--s8);align-items:center}
+.study .fig{border-left:1px solid var(--ink-30);border-right:none;padding-left:var(--s6);padding-right:0}
+#cflow{width:100%;display:block;cursor:crosshair}
+#c3d{cursor:crosshair}
+.plate .wrap{display:grid;grid-template-columns:1fr 1.618fr;gap:var(--s8);align-items:center}
+.plate .fig{border-left:none;border-right:1px solid var(--ink-30);padding-left:0;padding-right:var(--s6)}
+#c3d{width:100%;aspect-ratio:1/1;display:block}
+.plate h2{font-size:var(--t-2xl);margin:var(--s1) 0 var(--s3)}
+.plate h2 i{color:var(--lapis)}
+.plate p{max-width:30em;margin-bottom:var(--s3);font-size:.9875rem}
+#spiral{transition:none}
+@media(prefers-reduced-motion:no-preference){
+  #spiral.draw{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:plot 2.6s cubic-bezier(.4,0,.2,1) forwards .3s}
+  @keyframes plot{to{stroke-dashoffset:0}}
+}
+@media(max-width:800px){
+  .hero .wrap,.axiom .wrap,.specimen .wrap,.plate .wrap,.study .wrap{grid-template-columns:1fr}
+  .plate .fig,.study .fig{border-left:none;border-right:none;padding:0}
+  .spec{border-right:none;border-bottom:1px solid var(--ink-30)}
+  .hero{padding:var(--s6) 0}
+  .hero h1{font-size:var(--t-2xl)}
+  .fig{border-left:none;padding-left:0}
+  .tblock{grid-template-columns:1fr 1fr}
+  .tcell{border-bottom:1px solid var(--ink-30)}
+  .hcell{display:none}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="reg tl"></div><div class="reg tr"></div><div class="reg bl"></div><div class="reg br"></div>
+<a class="backlink" href="/">← rian.pt</a>
+
+<svg class="grain" width="100%" height="100%"><filter id="g"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2"/><feColorMatrix values="0 0 0 0 0.09  0 0 0 0 0.09  0 0 0 0 0.10  0 0 0 0.03 0"/></filter><rect width="100%" height="100%" filter="url(#g)"/></svg>
+
+<header>
+  <div class="wrap">
+    <div class="wordmark">Code<i>x</i></div>
+    <div class="hcell mono">Disegno · Macchina</div>
+    <div class="hcell mono"><b>Fol.&nbsp;001&nbsp;·&nbsp;R</b></div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <span class="mono tag">A design language</span>
+      <h1>The notebook of a master, <i>drawn by a machine</i></h1>
+      <p>Every element pairs a humanist gesture with a machine gesture: Caslon prose against monospace data, ink drawing against plotter line, the golden section beside its own equation. Proportion is not decorated — it is shown with its working.</p>
+      <span class="mono">Stroke 1.8px · Fill none · Radius <b>0</b></span>
+    </div>
+    <figure class="fig">
+      <svg viewBox="0 0 400 400" width="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="hatch" width="7" height="7" patternTransform="rotate(-45)" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="0" x2="0" y2="7" stroke="#2447a0" stroke-width="0.8" opacity="0.5"/>
+          </pattern>
+        </defs>
+        <g stroke="#16161a" stroke-width="0.5" fill="none" opacity="0.25">
+          <line x1="0" y1="200" x2="400" y2="200"/>
+          <line x1="200" y1="0" x2="200" y2="400"/>
+          <line x1="52" y1="52" x2="348" y2="348"/>
+          <line x1="348" y1="52" x2="52" y2="348"/>
+          <circle cx="200" cy="200" r="185"/>
+        </g>
+        <!-- golden rectangle 262 × 162 (= 262/φ), centred -->
+        <rect x="69" y="119" width="262" height="162" fill="none" stroke="#16161a" stroke-width="1.2"/>
+        <!-- subdivision into successive squares -->
+        <g stroke="#16161a" fill="none" opacity="0.5" stroke-width="0.7">
+          <line x1="231" y1="119" x2="231" y2="281"/>
+          <line x1="231" y1="219" x2="331" y2="219"/>
+          <line x1="269" y1="219" x2="269" y2="281"/>
+          <line x1="231" y1="243" x2="269" y2="243"/>
+          <line x1="255" y1="219" x2="255" y2="243"/>
+        </g>
+        <!-- hatch the second square (100 × 100) -->
+        <rect x="231" y="119" width="100" height="100" fill="url(#hatch)" stroke="none"/>
+        <!-- golden spiral: computed quarter arcs, verified in-square -->
+        <path id="spiral" d="M 69 281 A 162 162 0 0 1 231 119 A 100 100 0 0 1 331 219 A 62 62 0 0 1 269 281 A 38 38 0 0 1 231 243 A 24 24 0 0 1 255 219"
+              fill="none" stroke="#2447a0" stroke-width="1.9"/>
+        <!-- gold registration crosses at the arc joints -->
+        <g fill="none" stroke="#b08d2e" stroke-width="1.2">
+          <path d="M 64 281 h 10 M 69 276 v 10"/>
+          <path d="M 226 119 h 10 M 231 114 v 10"/>
+          <path d="M 326 219 h 10 M 331 214 v 10"/>
+          <path d="M 264 281 h 10 M 269 276 v 10"/>
+        </g>
+        <g font-size="9" fill="#16161a" opacity="0.8">
+          <text x="140" y="298">a = 162</text>
+          <text x="236" y="298">aφ − a</text>
+          <text x="338" y="203">a</text>
+          <text x="240" y="108" fill="#b08d2e">φ² − φ = 1</text>
+          <text x="18" y="28">r = 185</text>
+          <text x="120" y="176" fill="#2447a0">S(θ) = ae^θcotα</text>
+        </g>
+      </svg>
+      <figcaption>
+        <span class="mono">Fig. i — Sectio aurea</span>
+        <span class="mono" style="color:#2447a0">φ = 1.6180339887…</span>
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="specimen">
+  <div class="wrap">
+    <div class="spec">
+      <span class="mono"><span class="idx">01</span> Letterform</span>
+      <h2>Caslon speaks</h2>
+      <p>Libre Caslon carries the prose — the closest free descendant of William Caslon's 1722 cuts, the face of the Declaration of Independence. Courier Prime annotates — the typewriter voice, the first machine that wrote.</p>
+      <span class="mono">Caslon Disp/Text · Courier Prime · Scale 1:1.333</span>
+    </div>
+    <div class="spec">
+      <span class="mono"><span class="idx">02</span> Pigment</span>
+      <h2>Lapis &amp; gold</h2>
+      <p>The illuminator's pair: ultramarine ground from lapis lazuli, gold leaf on the initials. Five centuries later the same two read as electric blue and circuit-board gold. Ink is blue-black; paper is cold.</p>
+      <div class="swatches">
+        <div class="sw" style="background:#16161a"></div>
+        <div class="sw" style="background:#2447a0"></div>
+        <div class="sw" style="background:#b08d2e"></div>
+        <div class="sw" style="background:#f7f6f2"></div>
+      </div>
+      <span class="mono">Ink · Lapis · Gold · Paper</span>
+    </div>
+    <div class="spec">
+      <span class="mono"><span class="idx">03</span> Line</span>
+      <h2>Stroke over fill</h2>
+      <p>The page is a drawing sheet: framed border, registration marks, title block. Construction lines stay visible — the scaffolding is the ornament. Shadows are sfumato, never dropped. Corners do not exist.</p>
+      <span class="mono">Construction 0.5px @ 25% · Figure 1.2–1.9px</span>
+    </div>
+  </div>
+</section>
+
+<section class="plate">
+  <div class="wrap">
+    <figure class="fig">
+      <canvas id="c3d"></canvas>
+      <figcaption style="display:flex;justify-content:space-between;padding-right:0">
+        <span class="mono">Fig. ii — <span id="solidname">Duodecedron planus solidus</span></span>
+        <span class="mono" id="solidmeta" style="color:#b08d2e">12 · pentagona · φ</span>
+      </figcaption>
+    </figure>
+    <div>
+      <span class="mono">After Leonardo, De Divina Proportione · 1509</span>
+      <h2>He drew wireframes <i>five centuries early</i></h2>
+      <p>Leonardo's plates for Pacioli's treatise rendered the regular solids as skeletal frames — faces open, structure visible. The dodecahedron is the φ solid: twelve pentagons, every diagonal in golden ratio to its side. Here it turns under the same convention: paper faces, ink edges, hidden lines held faint, vertices marked in gold.</p>
+      <span class="mono">THREE.EdgesGeometry · Hidden 12% · <b>Click → proximum corpus</b></span>
+    </div>
+  </div>
+</section>
+
+<section class="plate study">
+  <div class="wrap">
+    <div>
+      <span class="mono">After the water studies · Codex Leicester</span>
+      <h2>The motion of water, <i>computed</i></h2>
+      <p>He filled folios tracing turbulence with a pen — vortices, eddies, braided currents. Here the same study is run by machine: nine hundred streamlines advected through a vector field, inked stroke by stroke. Each study is numbered by its seed; no two are alike, all obey the same field.</p>
+      <span class="mono"><b>Click → another study</b> · Streamlines 900 · Ink 0.6px</span>
+    </div>
+    <figure class="fig">
+      <canvas id="cflow"></canvas>
+      <figcaption style="display:flex;justify-content:space-between">
+        <span class="mono">Fig. iii — Moto dell'acqua</span>
+        <span class="mono" id="studyno" style="color:#2447a0">Study 0001</span>
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="axiom">
+  <div class="wrap">
+    <blockquote>Simplicity is the ultimate <i>sophistication</i> — the constraint this system enforces.</blockquote>
+    <div>
+      <span class="mono">Axiom 01 · Restraint</span>
+      <p>One drawing per view. Two pigments. Zero radii. Everything else is prose in service of the figure.</p>
+    </div>
+  </div>
+</section>
+
+<div class="tblock">
+  <div class="tcell"><span class="mono">Title</span><span class="val">CODEX — DESIGN LANGUAGE</span></div>
+  <div class="tcell"><span class="mono">Scale</span><span class="val">1:<i>φ</i></span></div>
+  <div class="tcell"><span class="mono">Sheet</span><span class="val">001 / 001</span></div>
+  <div class="tcell"><span class="mono">Rev</span><span class="val">C</span></div>
+  <div class="tcell"><span class="mono">Drawn by</span><span class="val">HAND &amp; MACHINE</span></div>
+</div>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
+<script is:inline>
+// spiral draw-on
+const sp = document.getElementById('spiral');
+if (sp && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  const len = sp.getTotalLength();
+  sp.style.strokeDasharray = len; sp.style.strokeDashoffset = len;
+  sp.style.setProperty('--len', len);
+  new IntersectionObserver((es,o)=>{es.forEach(e=>{if(e.isIntersecting){sp.classList.add('draw');o.disconnect();}})},{threshold:.4}).observe(sp);
+}
+// reading line
+const pr = document.getElementById('progress');
+addEventListener('scroll', ()=>{
+  const d = document.documentElement;
+  pr.style.width = (d.scrollTop/(d.scrollHeight-d.clientHeight))*(innerWidth-24) + 'px';
+}, {passive:true});
+// Fig iii — flow field water study
+(function(){
+  const c = document.getElementById('cflow'); if(!c) return;
+  const ctx = c.getContext('2d');
+  let seed = 1;
+  const label = document.getElementById('studyno');
+  function rng(s){ return function(){ s|=0; s=s+0x6D2B79F5|0; let t=Math.imul(s^s>>>15,1|s); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let raf;
+  function draw(){
+    cancelAnimationFrame(raf);
+    const w = c.clientWidth||600, h = Math.round(w*0.72), dpr = Math.min(devicePixelRatio,2);
+    c.width = w*dpr; c.height = h*dpr; c.style.height = h+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    const R = rng(seed*2654435761);
+    const a1=R()*6, a2=R()*6, f1=1.5+R()*2, f2=1.5+R()*2, sw=R()*2*Math.PI;
+    function ang(x,y){
+      const u=x/w, v=y/h;
+      return Math.sin(u*f1*3+a1)*1.4 + Math.cos(v*f2*3+a2)*1.4 + Math.sin((u+v)*4+sw)*0.6;
+    }
+    const lines=[];
+    for(let i=0;i<900;i++){
+      let x=R()*w, y=R()*h; const pts=[[x,y]];
+      const steps=26+((R()*30)|0);
+      for(let s=0;s<steps;s++){
+        const a=ang(x,y); x+=Math.cos(a)*3.1; y+=Math.sin(a)*3.1;
+        if(x<0||x>w||y<0||y>h) break; pts.push([x,y]);
+      }
+      if(pts.length>6) lines.push({pts, lapis: R()<0.055});
+    }
+    label.textContent = 'Study ' + String(seed).padStart(4,'0');
+    let k=0;
+    function frame(){
+      const batch = reduce ? lines.length : 26;
+      for(let n=0;n<batch && k<lines.length;n++,k++){
+        const L=lines[k];
+        ctx.beginPath(); ctx.moveTo(L.pts[0][0],L.pts[0][1]);
+        for(const p of L.pts) ctx.lineTo(p[0],p[1]);
+        ctx.strokeStyle = L.lapis ? 'rgba(36,71,160,0.75)' : 'rgba(22,22,26,0.5)';
+        ctx.lineWidth = L.lapis ? 0.9 : 0.6;
+        ctx.stroke();
+      }
+      if(k<lines.length) raf=requestAnimationFrame(frame);
+    }
+    frame();
+  }
+  c.addEventListener('click', ()=>{ seed++; draw(); });
+  draw();
+  addEventListener('resize', ()=>draw());
+})();
+</script>
+<script type="module">
+import * as THREE from 'three';
+const c = document.getElementById('c3d');
+if (c) {
+  const renderer = new THREE.WebGLRenderer({canvas:c, antialias:true, alpha:true});
+  const scene = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(32, 1, .1, 100); cam.position.z = 7;
+  const solids = [
+    {g:()=>new THREE.TetrahedronGeometry(2.1), n:'Tetracedron planus solidus', m:'4 · triangona'},
+    {g:()=>new THREE.BoxGeometry(2.4,2.4,2.4), n:'Exacedron planus solidus', m:'6 · quadrata'},
+    {g:()=>new THREE.OctahedronGeometry(2.1), n:'Octocedron planus solidus', m:'8 · triangona'},
+    {g:()=>new THREE.DodecahedronGeometry(1.9), n:'Duodecedron planus solidus', m:'12 · pentagona · φ'},
+    {g:()=>new THREE.IcosahedronGeometry(2.0), n:'Ycocedron planus solidus', m:'20 · triangona · φ'}
+  ];
+  let idx = 3;
+  const group = new THREE.Group(); scene.add(group);
+  function build(){
+    group.clear();
+    const geo = solids[idx].g();
+    group.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),
+      new THREE.LineBasicMaterial({color:0x16161a, transparent:true, opacity:0.12, depthTest:false})));
+    group.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:0xf7f6f2, polygonOffset:true, polygonOffsetFactor:2, polygonOffsetUnits:2})));
+    group.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({color:0x16161a})));
+    const pos = geo.attributes.position, seen = new Set(), verts = [];
+    for (let i=0;i<pos.count;i++){
+      const k=[pos.getX(i),pos.getY(i),pos.getZ(i)].map(v=>v.toFixed(3)).join(',');
+      if(!seen.has(k)){seen.add(k); verts.push(new THREE.Vector3(pos.getX(i),pos.getY(i),pos.getZ(i)));}
+    }
+    group.add(new THREE.Points(new THREE.BufferGeometry().setFromPoints(verts),
+      new THREE.PointsMaterial({color:0xb08d2e, size:0.09})));
+    document.getElementById('solidname').textContent = solids[idx].n;
+    document.getElementById('solidmeta').textContent = solids[idx].m;
+  }
+  build();
+  c.addEventListener('click', ()=>{ idx=(idx+1)%solids.length; build(); });
+  let tx=0, ty=0;
+  addEventListener('pointermove', e=>{ ty=(e.clientX/innerWidth-.5)*.5; tx=(e.clientY/innerHeight-.5)*.35; });
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function size(){ const w=c.clientWidth||420; renderer.setSize(w,w,false); renderer.setPixelRatio(Math.min(devicePixelRatio,2)); }
+  size(); addEventListener('resize', size);
+  let rx=0, ry=0;
+  (function loop(){ requestAnimationFrame(loop);
+    if(!reduce) ry += 0.0032;
+    rx += (tx-rx)*.04;
+    group.rotation.set(0.35+rx, ry+ty, 0);
+    renderer.render(scene, cam);
+  })();
+}
+</script>
+</body>
+</html>

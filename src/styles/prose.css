@@ -9,8 +9,8 @@
 .prose h2,
 .prose h3,
 .prose h4 {
-  font-family: var(--font-sans);
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 400;
   line-height: var(--leading-tight);
   margin-top: var(--space-12);
   margin-bottom: var(--space-4);
@@ -44,7 +44,7 @@
 }
 
 .prose blockquote {
-  border-left: 3px solid var(--color-olive);
+  border-left: 3px solid var(--color-lapis);
   padding-left: var(--space-6);
   margin-block: var(--space-6);
   color: var(--color-text-secondary);
@@ -56,14 +56,14 @@
   font-size: 0.875em;
   background-color: var(--color-bg-subtle);
   padding: 0.15em 0.35em;
-  border-radius: 3px;
+  border-radius: var(--radius);
 }
 
 .prose pre {
   background-color: var(--color-code-bg);
   color: var(--color-code-text);
   padding: var(--space-6);
-  border-radius: 6px;
+  border-radius: var(--radius);
   overflow-x: auto;
   margin-block: var(--space-6);
   line-height: var(--leading-normal);
@@ -72,7 +72,7 @@
 .prose pre code {
   background: none;
   padding: 0;
-  border-radius: 0;
+  border-radius: var(--radius);
   font-size: var(--text-sm);
   color: inherit;
 }
@@ -88,7 +88,7 @@
 }
 
 .prose img {
-  border-radius: 6px;
+  border-radius: var(--radius);
   margin-block: var(--space-6);
 }
 

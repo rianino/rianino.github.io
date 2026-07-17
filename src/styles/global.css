@@ -24,6 +24,19 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.2s ease, color 0.2s ease;
+  /* Codex framed sheet */
+  margin: 12px;
+  border: 1.5px solid var(--color-border-strong);
+  min-height: calc(100vh - 24px);
+}
+
+/* Machine annotation voice — uppercase Courier meta text */
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
 }
 
 /* Container */
@@ -54,7 +67,7 @@ hr {
 
 /* Focus styles */
 :focus-visible {
-  outline: 2px solid var(--color-olive);
+  outline: 2px solid var(--color-lapis);
   outline-offset: 2px;
 }
 
