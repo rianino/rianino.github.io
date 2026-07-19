@@ -30,6 +30,12 @@ body {
   min-height: calc(100vh - 24px);
 }
 
+/* Homepage lets the flow field fill the sheet; the solid page background is
+   suppressed so only the edge frame and the content wash stay white. */
+body:has(.veil) {
+  background-color: transparent;
+}
+
 /* Machine annotation voice — uppercase Courier meta text */
 .mono {
   font-family: var(--font-mono);

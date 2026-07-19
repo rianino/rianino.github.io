@@ -27,17 +27,28 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft))
 </BaseLayout>
 
 <style>
-  /* The water study shows through at the top, then the page fades toward the
-     background as you move down — the base stays 90% opaque so the flow field
-     remains faintly visible behind the content. */
+  /* The flow field fills the whole sheet; the content sits on a soft white
+     card whose edges dissolve into the water, with generous breathing room
+     between the text and where the wash gives way. */
   .veil {
     position: relative;
-    padding-block: var(--space-8);
-    background: linear-gradient(
-      to bottom,
-      transparent 0,
-      color-mix(in srgb, var(--color-bg) 55%, transparent) 12%,
-      color-mix(in srgb, var(--color-bg) 90%, transparent) 30%
+    padding-block: var(--space-16);
+    padding-inline: var(--space-12);
+    /* Radial wash: opaque under the text, fading to clear water at the sides
+       and top/bottom so the flow reads around the content. */
+    background: radial-gradient(
+      130% 75% at 50% 40%,
+      color-mix(in srgb, var(--color-bg) 90%, transparent) 0,
+      color-mix(in srgb, var(--color-bg) 90%, transparent) 42%,
+      color-mix(in srgb, var(--color-bg) 55%, transparent) 70%,
+      transparent 100%
     );
+  }
+
+  @media (max-width: 600px) {
+    .veil {
+      padding-block: var(--space-12);
+      padding-inline: var(--space-4);
+    }
   }
 </style>
