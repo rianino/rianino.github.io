@@ -7,7 +7,7 @@ tags: []
 
 There is something to be said for engineering in and of itself. It is not that it is good. It is not that it is bad either.
 
-Engineering is closer to science in that it can be used in many directions, but it differs from science in its aim: it is not after base-truths, it is after a result to an arbitrary objective. It satisfies practical needs. In that sense, it is more “Nietzschian” (although Nietzsche I consider a great Scientist): it dispenses with any notion of truth-unified reality, replacing the pursuit of truth with the pursuit of capability.
+Engineering is closer to science in that it can be used in many directions, but it differs from science in its aim: it is not after base-truths, it is after a result to an arbitrary objective. It satisfies practical needs. In that sense, it is more “Nietzschian”: it dispenses with any notion of truth-unified reality, replacing the pursuit of truth with the pursuit of capability.
 
 There is also a specific archetype of the Engineer. It relates to the Ego and to playing God in a way, but it is certainly true that the world has moved to become a better place owing to our existance. It has also moved counter-positively, though. I attempt to justify and align myself with engineering in this text.
 
