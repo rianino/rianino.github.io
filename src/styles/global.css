@@ -31,11 +31,22 @@ body {
 }
 
 /* Homepage lets the flow field fill the sheet; the solid page background is
-   suppressed. The white edge-frame lives on the body itself so it tracks the
-   black border exactly — top and bottom edges included — as the page scrolls. */
+   suppressed. A body background would be propagated to the viewport and stay
+   pinned while scrolling, so the white edge-frame is an absolutely-positioned
+   layer instead — it spans the full body box and tracks the black border,
+   top and bottom included, as the page scrolls. */
 body:has(.veil) {
   background-color: transparent;
-  background-image:
+  position: relative;
+}
+
+body:has(.veil)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
     linear-gradient(to right, var(--color-bg), transparent var(--space-16)),
     linear-gradient(to left, var(--color-bg), transparent var(--space-16)),
     linear-gradient(to bottom, var(--color-bg), transparent var(--space-12)),
