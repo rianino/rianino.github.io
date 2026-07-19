@@ -13,6 +13,9 @@
 html {
   font-size: 16px;
   -webkit-text-size-adjust: 100%;
+  /* Backmost layer — the paper. Flips with the theme so transparent areas of
+     the flow field and edge-frame read as paper, not browser white. */
+  background-color: var(--color-bg);
 }
 
 body {
