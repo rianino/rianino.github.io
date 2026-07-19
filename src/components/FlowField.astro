@@ -5,7 +5,6 @@
 ---
 
 <canvas id="cflow" aria-hidden="true"></canvas>
-<div class="flow-frame" aria-hidden="true"></div>
 
 <style>
   #cflow {
@@ -16,19 +15,6 @@
     z-index: -2;
     pointer-events: none;
     opacity: 0.4;
-  }
-  /* White only at the outer edges of the sheet; the centre stays clear so the
-     flow field fills top, bottom and sides as the page scrolls. */
-  .flow-frame {
-    position: fixed;
-    inset: 12px;
-    z-index: -1;
-    pointer-events: none;
-    background:
-      linear-gradient(to right, var(--color-bg), transparent var(--space-16)),
-      linear-gradient(to left, var(--color-bg), transparent var(--space-16)),
-      linear-gradient(to bottom, var(--color-bg), transparent var(--space-12)),
-      linear-gradient(to top, var(--color-bg), transparent var(--space-12));
   }
 </style>
 
