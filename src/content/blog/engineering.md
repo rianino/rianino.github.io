@@ -1,7 +1,7 @@
 ---
 title: "Engineering Upward"
 description: ""
-publishedAt: 2026-07-22
+publishedAt: 2026-07-23
 tags: []
 ---
 
