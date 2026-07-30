@@ -1,7 +1,7 @@
 ---
 title: "O lado digital das fábricas"
 description: ""
-publishedAt: 2026-07-29
+publishedAt: 2026-07-30
 tags: []
 ---
 
